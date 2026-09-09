@@ -328,7 +328,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       failedAttempts: (n) => `${n} ${n === 1 ? "intento fallido" : "intentos fallidos"} seguidos`,
     },
     regionTabs: {
-      worldwide: "Worldwide",
+      worldwide: "Mundial",
       removeAria: (label) => `Quitar ${label}`,
       addRegion: "+ Región",
     },

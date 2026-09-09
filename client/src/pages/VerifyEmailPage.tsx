@@ -58,7 +58,7 @@ export function VerifyEmailPage() {
           </>
         )}
         <Link to="/dashboard" className="block text-sm text-primary underline">
-          NicheRadar
+          Inntena
         </Link>
       </div>
     </div>

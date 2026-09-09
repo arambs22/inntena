@@ -5,7 +5,7 @@
  * with no inline-script exception.
  */
 (function () {
-  var theme = localStorage.getItem("nicheradar_theme");
+  var theme = localStorage.getItem("inntena_theme");
   // Dark is the default look — only an explicit stored "light" opts out of it.
   if (theme !== "light") {
     document.documentElement.classList.add("dark");

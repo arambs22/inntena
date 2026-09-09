@@ -63,7 +63,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
-/** Thin typed wrapper around fetch for the NicheRadar API, scoped to /api and cookie-authenticated. */
+/** Thin typed wrapper around fetch for the Inntena API, scoped to /api and cookie-authenticated. */
 export const api = {
   get: <T>(path: string) => request<T>(path, { method: "GET" }),
   post: <T>(path: string, data: unknown) =>

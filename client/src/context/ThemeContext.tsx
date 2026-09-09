@@ -19,7 +19,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("nicheradar_theme", theme);
+    localStorage.setItem("inntena_theme", theme);
   }, [theme]);
 
   function toggleTheme() {

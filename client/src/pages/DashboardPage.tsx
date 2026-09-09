@@ -13,7 +13,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { regionLabel } from "../lib/i18n";
 import type { Keyword, KeywordTrend, KeywordRelated } from "../lib/types";
 
-const ACTIVE_REGIONS_KEY = "nicheradar_regions_active";
+const ACTIVE_REGIONS_KEY = "inntena_regions_active";
 /** Where the added-region list lived before it moved to the backend. Read once, migrated, then dropped. */
 const LEGACY_ADDED_REGIONS_KEY = "nicheradar_regions_added";
 

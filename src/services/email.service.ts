@@ -16,7 +16,7 @@ const COLORS = {
 };
 
 /**
- * Wraps email body content in the shared NicheRadar layout: a centered card with a
+ * Wraps email body content in the shared Inntena layout: a centered card with a
  * text wordmark header and a consistent footer/CTA button. There's no logo image —
  * the app's own wordmark is styled text (see HeroWordmark.tsx), and many email
  * clients block remote images by default, so this reproduces it as inline-styled
@@ -40,7 +40,7 @@ function renderEmailLayout(heading: string, bodyHtml: string, ctaLabel: string, 
                       <div style="width:10px; height:10px; border-radius:50%; background-color:${COLORS.primary};"></div>
                     </td>
                     <td>
-                      <span style="font-family: Georgia, 'Times New Roman', serif; font-size:26px; font-weight:700; color:${COLORS.primary}; letter-spacing:0.02em;">NicheRadar</span>
+                      <span style="font-family: Georgia, 'Times New Roman', serif; font-size:26px; font-weight:700; color:${COLORS.primary}; letter-spacing:0.02em;">inntena</span>
                     </td>
                   </tr>
                 </table>
@@ -74,7 +74,7 @@ function renderEmailLayout(heading: string, bodyHtml: string, ctaLabel: string, 
               </td>
             </tr>
           </table>
-          <p style="margin:20px 0 0; font-family: Arial, Helvetica, sans-serif; font-size:11px; color:${COLORS.textMuted};">NicheRadar &middot; open-source trend detection for Etsy sellers</p>
+          <p style="margin:20px 0 0; font-family: Arial, Helvetica, sans-serif; font-size:11px; color:${COLORS.textMuted};">Inntena &middot; open-source trend detection for Etsy sellers</p>
         </td>
       </tr>
     </table>
@@ -87,7 +87,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
     logger.info(`[email:disabled] Would send "${subject}" to ${to}`, { html });
     return;
   }
-  await sgMail.send({ from: `NicheRadar <${env.SENDGRID_FROM_EMAIL}>`, to, subject, html });
+  await sgMail.send({ from: `Inntena <${env.SENDGRID_FROM_EMAIL}>`, to, subject, html });
 }
 
 /** Sends the "verify your email" link, valid for 24 hours (see TTL_MS in authToken.service.ts). */
@@ -95,12 +95,12 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
   const link = `${env.APP_URL}/verify-email?token=${token}`;
   const html = renderEmailLayout(
     "Confirm your email address",
-    `<p style="margin:0 0 12px;">Click the button below to verify your email and finish setting up your NicheRadar account.</p>
+    `<p style="margin:0 0 12px;">Click the button below to verify your email and finish setting up your Inntena account.</p>
      <p style="margin:0; color:${COLORS.textMuted};">This link expires in 24 hours.</p>`,
     "Verify email",
     link
   );
-  await sendEmail(to, "Verify your NicheRadar email", html);
+  await sendEmail(to, "Verify your Inntena email", html);
 }
 
 /** Sends the password-reset link, valid for 45 minutes (see TTL_MS in authToken.service.ts). */
@@ -108,10 +108,10 @@ export async function sendPasswordResetEmail(to: string, token: string): Promise
   const link = `${env.APP_URL}/reset-password?token=${token}`;
   const html = renderEmailLayout(
     "Reset your password",
-    `<p style="margin:0 0 12px;">We received a request to reset your NicheRadar password. Click the button below to choose a new one.</p>
+    `<p style="margin:0 0 12px;">We received a request to reset your Inntena password. Click the button below to choose a new one.</p>
      <p style="margin:0; color:${COLORS.textMuted};">This link expires in 45 minutes. If you didn't request this, you can safely ignore this email.</p>`,
     "Reset password",
     link
   );
-  await sendEmail(to, "Reset your NicheRadar password", html);
+  await sendEmail(to, "Reset your Inntena password", html);
 }

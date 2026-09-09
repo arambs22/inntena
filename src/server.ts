@@ -13,7 +13,7 @@ dns.setDefaultResultOrder("ipv4first");
 const app = createApp();
 
 app.listen(env.PORT, () => {
-  logger.info(`NicheRadar API listening on port ${env.PORT}`, {
+  logger.info(`Inntena API listening on port ${env.PORT}`, {
     env: env.NODE_ENV,
   });
 });

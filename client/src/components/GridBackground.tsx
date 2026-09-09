@@ -10,6 +10,14 @@ interface GridNode {
   row: number;
 }
 
+/** A rectangular range of grid cells (inclusive) that travelers must not step into. */
+interface AvoidZone {
+  minCol: number;
+  maxCol: number;
+  minRow: number;
+  maxRow: number;
+}
+
 interface Traveler {
   /** Sliding window of the most-recently-visited nodes, oldest first, up to `segments + 1` long. */
   nodes: GridNode[];
@@ -26,14 +34,24 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-/** Picks a random orthogonal neighbor in-bounds, excluding the node just left (no immediate backtracking). */
+function isInsideAnyZone(col: number, row: number, zones: AvoidZone[]): boolean {
+  return zones.some((z) => col >= z.minCol && col <= z.maxCol && row >= z.minRow && row <= z.maxRow);
+}
+
+/**
+ * Picks a random orthogonal neighbor in-bounds, excluding the node just left (no immediate
+ * backtracking) and any node inside an avoid zone (e.g. behind the wordmark) — this is what makes
+ * travelers bend around a zone's border instead of continuing straight into it, with no special-case
+ * "deflect" logic needed: they simply have no legal move that enters it.
+ */
 function pickNeighbor(
   col: number,
   row: number,
   cols: number,
   rows: number,
   avoidCol: number,
-  avoidRow: number
+  avoidRow: number,
+  zones: AvoidZone[]
 ): GridNode {
   const candidates: GridNode[] = [
     { col: col + 1, row },
@@ -42,7 +60,8 @@ function pickNeighbor(
     { col, row: row - 1 },
   ].filter((n) => n.col >= 0 && n.col < cols && n.row >= 0 && n.row < rows);
   const withoutBacktrack = candidates.filter((n) => !(n.col === avoidCol && n.row === avoidRow));
-  const pool = withoutBacktrack.length > 0 ? withoutBacktrack : candidates;
+  const withoutZones = withoutBacktrack.filter((n) => !isInsideAnyZone(n.col, n.row, zones));
+  const pool = withoutZones.length > 0 ? withoutZones : withoutBacktrack.length > 0 ? withoutBacktrack : candidates;
   return pool[Math.floor(Math.random() * pool.length)] ?? { col, row };
 }
 
@@ -95,12 +114,36 @@ export function GridBackground() {
     let cols = 0;
     let rows = 0;
     let travelers: Traveler[] = [];
+    let zones: AvoidZone[] = [];
     let frameId = 0;
 
+    // Grid cells overlapping any element marked data-grid-avoid (currently just the auth-page
+    // wordmark) — padded out by half a cell so travelers curve around the visible edge of the
+    // element instead of just its exact box.
+    function computeAvoidZones(): AvoidZone[] {
+      const canvasRect = canvas!.getBoundingClientRect();
+      const padding = SPACING / 2;
+      return Array.from(document.querySelectorAll<HTMLElement>("[data-grid-avoid]")).map((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          minCol: Math.floor((r.left - canvasRect.left - padding) / SPACING),
+          maxCol: Math.ceil((r.right - canvasRect.left + padding) / SPACING),
+          minRow: Math.floor((r.top - canvasRect.top - padding) / SPACING),
+          maxRow: Math.ceil((r.bottom - canvasRect.top + padding) / SPACING),
+        };
+      });
+    }
+
     function spawnTraveler(delay: number): Traveler {
-      const col = Math.floor(Math.random() * cols);
-      const row = Math.floor(Math.random() * rows);
-      const target = pickNeighbor(col, row, cols, rows, -1, -1);
+      let col = 0;
+      let row = 0;
+      let attempts = 0;
+      do {
+        col = Math.floor(Math.random() * cols);
+        row = Math.floor(Math.random() * rows);
+        attempts++;
+      } while (isInsideAnyZone(col, row, zones) && attempts < 30);
+      const target = pickNeighbor(col, row, cols, rows, -1, -1, zones);
       return {
         nodes: [{ col, row }],
         segments: randomSegments(),
@@ -122,6 +165,7 @@ export function GridBackground() {
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
       cols = Math.max(2, Math.floor(width / SPACING) + 1);
       rows = Math.max(2, Math.floor(height / SPACING) + 1);
+      zones = computeAvoidZones();
       travelers = Array.from({ length: TRAVELER_COUNT }, (_, i) => spawnTraveler(i * 180));
     }
 
@@ -144,7 +188,7 @@ export function GridBackground() {
             tr.nodes.shift();
           }
           const secondLast = tr.nodes[tr.nodes.length - 2] ?? last;
-          const next = pickNeighbor(tr.targetCol, tr.targetRow, cols, rows, secondLast.col, secondLast.row);
+          const next = pickNeighbor(tr.targetCol, tr.targetRow, cols, rows, secondLast.col, secondLast.row, zones);
           tr.targetCol = next.col;
           tr.targetRow = next.row;
           tr.startTime = now;
@@ -184,6 +228,12 @@ export function GridBackground() {
 
     resize();
     window.addEventListener("resize", resize);
+    // The wordmark's font (Zilla Slab) can finish loading after this first resize(), changing its
+    // measured box — recompute the avoid zone once it's actually settled instead of possibly
+    // excluding the fallback font's (differently sized) box forever.
+    document.fonts.ready.then(() => {
+      zones = computeAvoidZones();
+    });
 
     if (!reduceMotion) {
       frameId = requestAnimationFrame(draw);

@@ -53,7 +53,7 @@ export function Navbar() {
         <span className="flex items-center gap-3 font-display text-lg font-semibold text-text">
           <span className="flex items-center gap-2">
             <PulseDot />
-            NicheRadar
+            inntena
           </span>
           <button
             type="button"

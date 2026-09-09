@@ -15,7 +15,7 @@
 
 ## Context
 
-NicheRadar is a free, open-source, multi-user tool for detecting design
+Inntena is a free, open-source, multi-user tool for detecting design
 trends in marketplaces like Etsy before they saturate. It needs to be
 self-hostable by any seller with minimal friction — "clone the repo and run
 it in 5 minutes, no mandatory external dependencies" — while still being a
@@ -166,7 +166,7 @@ external accounts.
   problem instead of solving it.
 - **Multi-platform support** (Amazon, TikTok Shop, MercadoLibre, Shopify)
   — evaluated and explicitly descoped; those platforms already have
-  mature, well-funded trend-research tooling. The real gap NicheRadar
+  mature, well-funded trend-research tooling. The real gap Inntena
   targets is the AI-generated digital-product seller vertical, not any
   particular marketplace.
 

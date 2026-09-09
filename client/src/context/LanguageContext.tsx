@@ -9,7 +9,7 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "nicheradar_language";
+const STORAGE_KEY = "inntena_language";
 
 function getInitialLanguage(): Language {
   return localStorage.getItem(STORAGE_KEY) === "es" ? "es" : "en";

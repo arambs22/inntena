@@ -1,19 +1,19 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: niche-radar-postgres
+    container_name: inntena-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-nicheradar}
-      POSTGRES_USER: ${POSTGRES_USER:-nicheradar}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nicheradar}
+      POSTGRES_DB: ${POSTGRES_DB:-inntena}
+      POSTGRES_USER: ${POSTGRES_USER:-inntena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-inntena}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nicheradar}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-inntena}"]
       interval: 5s
       timeout: 5s
       retries: 5

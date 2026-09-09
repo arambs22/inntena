@@ -1,1 +1,1 @@
-CREATE DATABASE nicheradar_test;
+CREATE DATABASE inntena_test;

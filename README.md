@@ -1,4 +1,4 @@
-# NicheRadar
+# Inntena
 
 ![Status](https://img.shields.io/badge/status-live-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -14,7 +14,7 @@ AI-generated digital assets.
 ## Why
 
 Tools like eRank or Alura solve this problem, but they're paid and 
-closed source. NicheRadar offers the essentials: Google Trends search 
+closed source. Inntena offers the essentials: Google Trends search 
 volume tracking and rising related searches, multi region comparison, and
 a history of everything you've tracked, for free, transparently, and easy
 to self host.
@@ -99,9 +99,9 @@ openssl rand -base64 48
 ```bash
 docker compose up -d
 ```
-   This also creates a second, empty `nicheradar_test` database on the same
+   This also creates a second, empty `inntena_test` database on the same
    container (via `docker/init-test-db.sql`), used only by the test suite
-   below — it never touches your regular `nicheradar` data.
+   below — it never touches your regular `inntena` data.
 
 6. Apply the database schema:
 ```bash
@@ -113,7 +113,7 @@ npm run db:migrate
 cp .env.test.example .env.test
 npm test
 ```
-   The tests run against the real `nicheradar_test` database from step 5
+   The tests run against the real `inntena_test` database from step 5
    (migrations included — `npm test` applies them automatically before
    running), not mocks. The frontend has its own, separate suite for
    pure logic (`npm test --prefix client`) — no database needed.

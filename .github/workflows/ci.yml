@@ -57,9 +57,9 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: nicheradar
-          POSTGRES_PASSWORD: nicheradar
-          POSTGRES_DB: nicheradar_test
+          POSTGRES_USER: inntena
+          POSTGRES_PASSWORD: inntena
+          POSTGRES_DB: inntena_test
         ports:
           - 5432:5432
         options: >-
