@@ -14,7 +14,7 @@ jobs:
       # keeps it under that threshold so it never goes to sleep.
       - name: Ping health endpoint
         run: |
-          curl --fail --max-time 30 --retry 2 --retry-delay 5 \
+          curl --fail --max-time 30 --retry 5 --retry-delay 10 \
             -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" \
             -H "Accept: text/html,application/json" \
             "${{ secrets.NICHERADAR_URL }}/health"
