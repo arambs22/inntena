@@ -63,8 +63,8 @@ Want to run your own instance instead of using the [live demo](https://niche-rad
 
 1. Clone the repo:
 ```bash
-git clone https://github.com/arambs22/Niche-Radar.git
-cd Niche-Radar
+git clone https://github.com/arambs22/inntena.git
+cd inntena
 ```
 
 2. Install backend dependencies:

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: niche-radar
+    name: inntena
     env: node
     plan: free
     # --include=dev is required: NODE_ENV=production (set below) makes npm skip
