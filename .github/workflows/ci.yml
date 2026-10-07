@@ -29,12 +29,13 @@ jobs:
       - name: Lint backend
         run: npm run lint
 
-      # audit-level=high: don't fail CI on the already-reviewed moderate
-      # esbuild/drizzle-kit advisory (dev-only tool, never runs in
-      # production — see the security hardening notes) — only new
-      # high/critical findings should ever break the build.
+      # --omit=dev: audit only what actually ships to production. Advisories
+      # in dev-only tooling (Vitest/tinypool, drizzle-kit/esbuild) never run
+      # on the deployed server and are tracked through Dependabot instead.
+      # audit-level=high: only new high/critical findings in production
+      # dependencies should break the build.
       - name: Audit backend dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Install frontend dependencies
         run: npm ci --prefix client
@@ -46,7 +47,7 @@ jobs:
         run: npm run lint --prefix client
 
       - name: Audit frontend dependencies
-        run: npm audit --audit-level=high --prefix client
+        run: npm audit --omit=dev --audit-level=high --prefix client
 
       - name: Test frontend
         run: npm test --prefix client
