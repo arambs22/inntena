@@ -4,8 +4,6 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 **Live demo:** [niche-radar.onrender.com](https://niche-radar.onrender.com)
-*(hosted on a free tier — the first request after a while may take ~30-60s
-to wake the server up)*
 
 A free, open-source tool to detect design and aesthetic trends **before they
 saturate** marketplaces like Etsy — built for creators of clip art and
