@@ -7,7 +7,16 @@ import { TrendChart } from "../components/TrendChart";
 import { RelatedQueriesList } from "../components/RelatedQueriesList";
 import { VerificationBanner } from "../components/VerificationBanner";
 import { api, isUnauthorized } from "../lib/api";
-import { countChartDays } from "../lib/trendChart";
+import { ChartRangeSelector } from "../components/ChartRangeSelector";
+import { KeywordListToolbar } from "../components/KeywordListToolbar";
+import { arrangeKeywords, loadSortMode, saveSortMode, type SortMode } from "../lib/keywordListView";
+import {
+  countChartDays,
+  loadChartRange,
+  saveChartRange,
+  sliceSeries,
+  type ChartRange,
+} from "../lib/trendChart";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { regionLabel } from "../lib/i18n";
@@ -46,7 +55,29 @@ export function DashboardPage() {
   const [loadingKeywords, setLoadingKeywords] = useState(true);
   const [loadingTrends, setLoadingTrends] = useState(true);
   const [keywordsError, setKeywordsError] = useState(false);
+  const [range, setRange] = useState<ChartRange>(loadChartRange);
+  const [query, setQuery] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>(loadSortMode);
+  const [maxKeywords, setMaxKeywords] = useState<number | null>(null);
   const hydratedRegions = useRef(false);
+
+  function handleRangeChange(next: ChartRange) {
+    setRange(next);
+    saveChartRange(next);
+  }
+
+  function handleSortModeChange(next: SortMode) {
+    setSortMode(next);
+    saveSortMode(next);
+  }
+
+  useEffect(() => {
+    // The counter is informational: if this request fails it is simply hidden.
+    api
+      .get<{ max: number; active: number }>("/keywords/limit")
+      .then((res) => setMaxKeywords(res.max))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Runs once per mount even under StrictMode's double-invoked effects, so
@@ -105,7 +136,6 @@ export function DashboardPage() {
       .get<Keyword[]>(`/keywords?geo=${encodeURIComponent(geoParam)}`)
       .then((res) => {
         setKeywords(res);
-        setSelectedId((prev) => prev ?? res[0]?.id ?? null);
         return res;
       })
       .catch((err) => {
@@ -147,10 +177,13 @@ export function DashboardPage() {
   }, [activeRegions]);
 
   useEffect(() => {
-    if (selectedId !== null && !keywords.some((k) => k.id === selectedId)) {
-      setSelectedId(keywords[0]?.id ?? null);
+    // Keeps a valid selection: picks one when there is none yet, or when the selected keyword is gone.
+    // It defaults to the first keyword the user actually sees, not the backend's order — the list is
+    // re-sorted client-side, so the two only coincide by accident.
+    if (selectedId === null || !keywords.some((k) => k.id === selectedId)) {
+      setSelectedId(arrangeKeywords(keywords, "", sortMode)[0]?.id ?? null);
     }
-  }, [keywords, selectedId]);
+  }, [keywords, selectedId, sortMode]);
 
   function handleAddRegion(code: string) {
     setAddedRegions((prev) => (prev.includes(code) ? prev : [...prev, code]));
@@ -181,11 +214,15 @@ export function DashboardPage() {
   }
 
   const selectedKeyword = keywords.find((k) => k.id === selectedId) ?? null;
+  const arranged = arrangeKeywords(keywords, query, sortMode);
+  const atLimit = maxKeywords !== null && keywords.length >= maxKeywords;
 
   const chartSeries = activeRegions.map((region) => ({
     region,
     timeline: trendsByRegion[region]?.find((t) => t.id === selectedId)?.timeline ?? [],
   }));
+
+  const visibleSeries = sliceSeries(chartSeries, range);
 
   const relatedColumns = activeRegions.map((region) => ({
     region,
@@ -196,7 +233,9 @@ export function DashboardPage() {
     <div className="flex h-screen flex-col overflow-y-auto bg-bg">
       {user && !user.emailVerified && <VerificationBanner />}
       <Navbar />
-      <main className="flex flex-1 flex-col gap-4 px-6 py-4">
+      {/* min-h-0 lets this flex item shrink below its content height. Without it the keyword list's
+          own height can never be bounded, so a long list stretches the whole page instead of scrolling. */}
+      <main className="flex min-h-0 flex-1 flex-col gap-4 px-6 py-4">
         <RegionTabs
           added={addedRegions}
           active={activeRegions}
@@ -206,7 +245,27 @@ export function DashboardPage() {
         />
         <div className="grid min-h-[480px] flex-1 gap-6 md:grid-cols-[320px_1fr]">
           <div className="flex min-h-0 flex-col gap-4">
-            <KeywordForm onCreated={() => refetchKeywords()} />
+            <KeywordForm
+              onCreated={() => refetchKeywords()}
+              limitReached={atLimit}
+              maxKeywords={maxKeywords ?? undefined}
+            />
+            {keywords.length > 0 && (
+              <div className="flex shrink-0 flex-col gap-2">
+                {maxKeywords !== null && (
+                  <p className={`text-xs ${atLimit ? "text-primary" : "text-text-muted"}`}>
+                    {t.keywordList.limitCounter(keywords.length, maxKeywords)}
+                    {atLimit && <> · {t.keywordList.limitReached(maxKeywords)}</>}
+                  </p>
+                )}
+                <KeywordListToolbar
+                  query={query}
+                  onQueryChange={setQuery}
+                  sortMode={sortMode}
+                  onSortModeChange={handleSortModeChange}
+                />
+              </div>
+            )}
             <div className="keyword-scroll min-h-0 flex-1 overflow-y-auto">
               {loadingKeywords ? (
                 <p className="text-sm text-text-muted">{t.dashboard.loadingKeywords}</p>
@@ -214,7 +273,8 @@ export function DashboardPage() {
                 <p className="text-sm text-primary">{t.dashboard.keywordsError}</p>
               ) : (
                 <KeywordList
-                  keywords={keywords}
+                  keywords={arranged}
+                  query={query}
                   activeRegions={activeRegions}
                   onChanged={() => refetchKeywords()}
                   selectedId={selectedId}
@@ -240,7 +300,12 @@ export function DashboardPage() {
               <div className="grid h-full grid-rows-[auto_auto_1fr_auto_auto] gap-2">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted">{t.dashboard.trend}</h2>
-                  <span className="text-xs text-text-muted">{t.dashboard.showingDays(countChartDays(chartSeries))}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-text-muted">
+                      {t.dashboard.showingDays(countChartDays(visibleSeries))}
+                    </span>
+                    <ChartRangeSelector value={range} onChange={handleRangeChange} />
+                  </div>
                 </div>
                 <p className="text-xs text-text-muted">
                   {selectedKeyword && selectedKeyword.regions.length > 0
@@ -248,7 +313,7 @@ export function DashboardPage() {
                     : t.dashboard.noDataYet}
                 </p>
                 <div className="min-h-[260px]">
-                  <TrendChart series={chartSeries} />
+                  <TrendChart series={visibleSeries} />
                 </div>
                 <h2 className="mt-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
                   {t.dashboard.relatedRising}

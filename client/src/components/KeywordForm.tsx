@@ -1,14 +1,18 @@
 import { useState, type FormEvent } from "react";
-import { api, getErrorMessage } from "../lib/api";
+import { api, getApiErrorCode, getApiErrorLimit, getErrorMessage } from "../lib/api";
 import { useLanguage } from "../context/LanguageContext";
 import type { Keyword } from "../lib/types";
 
 interface KeywordFormProps {
   onCreated: () => void;
+  /** Disables submission while the user is at the keyword cap. */
+  limitReached?: boolean;
+  /** Cap shown in the limit message when the backend response does not carry one. */
+  maxKeywords?: number;
 }
 
 /** Form to create a new tracked keyword; calls onCreated() after a successful POST. */
-export function KeywordForm({ onCreated }: KeywordFormProps) {
+export function KeywordForm({ onCreated, limitReached = false, maxKeywords }: KeywordFormProps) {
   const { t } = useLanguage();
   const [term, setTerm] = useState("");
   const [category, setCategory] = useState("");
@@ -28,7 +32,11 @@ export function KeywordForm({ onCreated }: KeywordFormProps) {
       setCategory("");
       onCreated();
     } catch (err) {
-      setError(getErrorMessage(err, t.auth.genericError));
+      if (getApiErrorCode(err) === "KEYWORD_LIMIT_REACHED") {
+        setError(t.keywordList.limitReached(getApiErrorLimit(err) ?? maxKeywords ?? 0));
+      } else {
+        setError(getErrorMessage(err, t.auth.genericError));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -59,7 +67,7 @@ export function KeywordForm({ onCreated }: KeywordFormProps) {
       </div>
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || limitReached}
         className="rounded bg-primary-solid px-4 py-1.5 text-sm font-medium text-on-primary hover:bg-primary-solid-hover disabled:opacity-50"
       >
         {submitting ? t.keywordForm.submitting : t.keywordForm.submit}

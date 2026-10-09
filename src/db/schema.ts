@@ -36,6 +36,8 @@ export const keywords = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     removedAt: timestamp("removed_at"),
     autoCollectPaused: boolean("auto_collect_paused").notNull().default(false),
+    /** When the keyword was pinned to the top of the list; null when not pinned. Cleared on archive. */
+    pinnedAt: timestamp("pinned_at"),
   },
   (table) => ({
     // Uniqueness is scoped per user: different users may track the

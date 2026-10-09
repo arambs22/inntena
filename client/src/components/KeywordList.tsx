@@ -10,6 +10,8 @@ interface KeywordListProps {
   onChanged: () => void;
   selectedId: number | null;
   onSelect: (id: number) => void;
+  /** Active search query; used only to tell "no keywords at all" apart from "no keyword matches". */
+  query?: string;
 }
 
 function getBlockedRegions(keyword: Keyword, activeRegions: string[]): string[] {
@@ -94,9 +96,14 @@ function BlockedIndicator({ keyword, blockedRegions }: BlockedIndicatorProps) {
   );
 }
 
-/** Lists the user's tracked keywords; click to select, pause/resume automatic collection, or archive individually. */
-export function KeywordList({ keywords, activeRegions, onChanged, selectedId, onSelect }: KeywordListProps) {
+/** Lists the user's tracked keywords; click to select, pin, pause/resume automatic collection, or archive individually. */
+export function KeywordList({ keywords, activeRegions, onChanged, selectedId, onSelect, query = "" }: KeywordListProps) {
   const { t } = useLanguage();
+
+  async function handleTogglePin(id: number, currentlyPinned: boolean) {
+    await api.patch(`/keywords/${id}/pin`, { pinned: !currentlyPinned });
+    onChanged();
+  }
 
   async function handleDelete(id: number) {
     await api.delete(`/keywords/${id}`);
@@ -109,7 +116,8 @@ export function KeywordList({ keywords, activeRegions, onChanged, selectedId, on
   }
 
   if (keywords.length === 0) {
-    return <p className="text-sm text-text-muted">{t.keywordList.empty}</p>;
+    const message = query.trim() !== "" ? t.keywordList.noMatches(query.trim()) : t.keywordList.empty;
+    return <p className="text-sm text-text-muted">{message}</p>;
   }
 
   return (
@@ -125,6 +133,18 @@ export function KeywordList({ keywords, activeRegions, onChanged, selectedId, on
             }`}
           >
             <div className="flex min-w-0 items-center gap-2">
+              {keyword.pinnedAt !== null && (
+                <svg
+                  viewBox="0 0 16 16"
+                  width="12"
+                  height="12"
+                  fill="currentColor"
+                  aria-hidden="true"
+                  className="shrink-0 text-primary"
+                >
+                  <path d="M9.5 1.5l5 5-1.6.6-2.4 2.4.3 3.2-1.1 1.1-2.8-2.8-4.2 4.2-.7-.7 4.2-4.2-2.8-2.8 1.1-1.1 3.2.3 2.4-2.4z" />
+                </svg>
+              )}
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-text" title={keyword.term}>
                   {keyword.term}
@@ -134,6 +154,15 @@ export function KeywordList({ keywords, activeRegions, onChanged, selectedId, on
               {blockedRegions.length > 0 && <BlockedIndicator keyword={keyword} blockedRegions={blockedRegions} />}
             </div>
             <div className="flex shrink-0 items-center gap-2 text-xs">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTogglePin(keyword.id, keyword.pinnedAt !== null);
+                }}
+                className="text-text-muted hover:underline"
+              >
+                {keyword.pinnedAt !== null ? t.keywordList.unpin : t.keywordList.pin}
+              </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

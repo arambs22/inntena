@@ -29,6 +29,13 @@
       "when": 1787872637103,
       "tag": "0003_lively_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791520599277,
+      "tag": "0004_panoramic_multiple_man",
+      "breakpoints": true
     }
   ]
 }

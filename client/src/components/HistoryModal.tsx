@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useLanguage } from "../context/LanguageContext";
 import { regionLabel } from "../lib/i18n";
+import { filterKeywords } from "../lib/keywordListView";
 import type { KeywordHistoryEntry } from "../lib/types";
 import { Modal } from "./Modal";
 import { HistoryDetailModal } from "./HistoryDetailModal";
@@ -29,6 +30,7 @@ export function HistoryModal({ initialRetentionDays, onClose }: HistoryModalProp
   const [regionFilter, setRegionFilter] = useState(ALL_REGIONS_FILTER);
   const [retentionDays, setRetentionDays] = useState(initialRetentionDays);
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     api
@@ -43,8 +45,9 @@ export function HistoryModal({ initialRetentionDays, onClose }: HistoryModalProp
   }
 
   const allRegions = Array.from(new Set(entries.flatMap((e) => e.regions)));
-  const filtered =
+  const regionFiltered =
     regionFilter === ALL_REGIONS_FILTER ? entries : entries.filter((e) => e.regions.includes(regionFilter));
+  const filtered = filterKeywords(regionFiltered, query);
   const detailEntry = entries.find((e) => e.id === detailId) ?? null;
 
   return (
@@ -78,11 +81,21 @@ export function HistoryModal({ initialRetentionDays, onClose }: HistoryModalProp
             ))}
           </select>
         )}
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t.history.searchPlaceholder}
+          aria-label={t.history.searchAria}
+          className="mb-3 w-full rounded border border-border bg-bg px-3 py-1.5 text-sm text-text"
+        />
         <div className="max-h-96 overflow-y-auto">
           {loading ? (
             <p className="text-xs text-text-muted">{t.common.loading}</p>
           ) : filtered.length === 0 ? (
-            <p className="text-xs text-text-muted">{t.history.empty}</p>
+            <p className="text-xs text-text-muted">
+              {query.trim() !== "" && regionFiltered.length > 0 ? t.history.noMatches(query.trim()) : t.history.empty}
+            </p>
           ) : (
             <ul className="space-y-2">
               {filtered.map((entry) => (

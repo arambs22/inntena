@@ -1,5 +1,25 @@
 import { describe, expect, test } from "vitest";
-import { ApiError, isUnauthorized, getErrorMessage } from "./api";
+import { ApiError, isUnauthorized, getErrorMessage, getApiErrorCode, getApiErrorLimit } from "./api";
+
+describe("getApiErrorCode / getApiErrorLimit", () => {
+  const limitErr = new ApiError(422, { error: "Límite alcanzado", code: "KEYWORD_LIMIT_REACHED", limit: 15 });
+
+  test("return the backend code and limit for an ApiError that carries them", () => {
+    expect(getApiErrorCode(limitErr)).toBe("KEYWORD_LIMIT_REACHED");
+    expect(getApiErrorLimit(limitErr)).toBe(15);
+  });
+
+  test("return null for an ApiError without them", () => {
+    const err = new ApiError(400, { error: "Email inválido" });
+    expect(getApiErrorCode(err)).toBeNull();
+    expect(getApiErrorLimit(err)).toBeNull();
+  });
+
+  test("return null for a non-ApiError value", () => {
+    expect(getApiErrorCode(new Error("network failure"))).toBeNull();
+    expect(getApiErrorLimit(new Error("network failure"))).toBeNull();
+  });
+});
 
 describe("isUnauthorized", () => {
   test("true for a 401 ApiError", () => {

@@ -1,5 +1,7 @@
 export interface ApiErrorBody {
   error: string | Record<string, string[] | undefined>;
+  code?: string;
+  limit?: number;
 }
 
 /** Thrown by `api.*` calls when the backend responds with a non-2xx status. */
@@ -36,6 +38,16 @@ export function isUnauthorized(err: unknown): boolean {
 /** The message a form should show for a caught error: the backend's own message for an ApiError, or a generic fallback for anything else (a network failure, for instance). */
 export function getErrorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? formatApiError(err.body.error) : fallback;
+}
+
+/** The machine-readable `code` the backend attached to an error, or null when absent or not an ApiError. */
+export function getApiErrorCode(err: unknown): string | null {
+  return err instanceof ApiError && typeof err.body.code === "string" ? err.body.code : null;
+}
+
+/** The numeric `limit` the backend attached to an error (e.g. the keyword cap), or null when absent or not an ApiError. */
+export function getApiErrorLimit(err: unknown): number | null {
+  return err instanceof ApiError && typeof err.body.limit === "number" ? err.body.limit : null;
 }
 
 const BASE_URL = "/api";

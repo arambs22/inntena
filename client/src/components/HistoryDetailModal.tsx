@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "./Modal";
 import { TrendChart } from "./TrendChart";
 import { RelatedQueriesList } from "./RelatedQueriesList";
-import { api } from "../lib/api";
+import { api, getApiErrorCode, getApiErrorLimit, getErrorMessage } from "../lib/api";
 import { useLanguage } from "../context/LanguageContext";
 import type { Keyword, KeywordHistoryEntry, KeywordHistoryTrends, KeywordHistoryRelated } from "../lib/types";
 
@@ -20,6 +20,7 @@ export function HistoryDetailModal({ entry, onClose, onRestored, onDeleted }: Hi
   const [related, setRelated] = useState<KeywordHistoryRelated | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -33,9 +34,16 @@ export function HistoryDetailModal({ entry, onClose, onRestored, onDeleted }: Hi
 
   async function handleRestore() {
     setRestoring(true);
+    setRestoreError(null);
     try {
       const restored = await api.patch<Keyword>(`/keywords/${entry.id}/restore`, {});
       onRestored(restored);
+    } catch (err) {
+      if (getApiErrorCode(err) === "KEYWORD_LIMIT_REACHED") {
+        setRestoreError(t.keywordList.limitReached(getApiErrorLimit(err) ?? 0));
+      } else {
+        setRestoreError(getErrorMessage(err, t.auth.genericError));
+      }
     } finally {
       setRestoring(false);
     }
@@ -64,6 +72,7 @@ export function HistoryDetailModal({ entry, onClose, onRestored, onDeleted }: Hi
             <TrendChart series={trends.series} />
           </div>
           <RelatedQueriesList columns={related.columns} />
+          {restoreError && <p className="text-sm text-primary">{restoreError}</p>}
           {entry.removedAt && (
             <div className="flex gap-2">
               <button

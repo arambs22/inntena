@@ -20,6 +20,7 @@ export interface Keyword {
   createdAt: string;
   removedAt: string | null;
   autoCollectPaused: boolean;
+  pinnedAt: string | null;
   collectionStatus?: Record<string, KeywordRegionStatus>;
   regions: string[];
 }

@@ -1,9 +1,10 @@
-import { Router, type Request } from "express";
+import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { and, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { keywords, trendSnapshots, relatedQueries, users, keywordCollectionStatus } from "../db/schema.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { MAX_ACTIVE_KEYWORDS_PER_USER } from "../config/limits.js";
 import { MAX_CONSECUTIVE_FAILURES } from "../services/trendCollector.service.js";
 
 export const keywordsRouter = Router();
@@ -15,6 +16,53 @@ function parseIdParam(req: Request): number | null {
   const id = Number(req.params.id);
   return Number.isInteger(id) ? id : null;
 }
+
+/** Transaction handle passed to the callbacks of {@link withKeywordCapacity}. */
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Sentinel returned by {@link withKeywordCapacity} when the user is already at the active keyword cap. */
+const LIMIT_REACHED = Symbol("KEYWORD_LIMIT_REACHED");
+
+/**
+ * Runs `write` inside a transaction only if the user has room for another active keyword.
+ * The user's row is locked (`SELECT ... FOR UPDATE`) before counting, so concurrent requests from
+ * the same user are serialized and cannot both slip under the cap.
+ *
+ * @returns the callback's result, or {@link LIMIT_REACHED} if the cap is already met.
+ */
+async function withKeywordCapacity<T>(userId: number, write: (tx: Tx) => Promise<T>): Promise<T | typeof LIMIT_REACHED> {
+  return db.transaction(async (tx) => {
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, userId)).for("update");
+    const [row] = await tx
+      .select({ active: count() })
+      .from(keywords)
+      .where(and(eq(keywords.userId, userId), isNull(keywords.removedAt)));
+    if ((row?.active ?? 0) >= MAX_ACTIVE_KEYWORDS_PER_USER) return LIMIT_REACHED;
+    return write(tx);
+  });
+}
+
+/** Sends the 422 response used whenever an action would exceed the active keyword cap. */
+function sendLimitReached(res: Response): void {
+  res.status(422).json({
+    error: `Llegaste al máximo de ${MAX_ACTIVE_KEYWORDS_PER_USER} keywords activas. Archiva alguna para agregar otra.`,
+    code: "KEYWORD_LIMIT_REACHED",
+    limit: MAX_ACTIVE_KEYWORDS_PER_USER,
+  });
+}
+
+/** GET /limit — the per-user active keyword cap and how many active keywords the user currently has. */
+keywordsRouter.get("/limit", async (req, res, next) => {
+  try {
+    const [row] = await db
+      .select({ active: count() })
+      .from(keywords)
+      .where(and(eq(keywords.userId, req.userId!), isNull(keywords.removedAt)));
+    res.json({ max: MAX_ACTIVE_KEYWORDS_PER_USER, active: row?.active ?? 0 });
+  } catch (err) {
+    next(err);
+  }
+});
 
 const createKeywordSchema = z.object({
   term: z.string().trim().min(1, "El término no puede estar vacío").max(100, "El término es demasiado largo"),
@@ -43,19 +91,33 @@ keywordsRouter.post("/", async (req, res, next) => {
     }
 
     if (existing) {
-      const [restored] = await db
-        .update(keywords)
-        .set({ removedAt: null, ...(category ? { category } : {}) })
-        .where(eq(keywords.id, existing.id))
-        .returning();
+      const restored = await withKeywordCapacity(req.userId!, async (tx) => {
+        const [row] = await tx
+          .update(keywords)
+          .set({ removedAt: null, ...(category ? { category } : {}) })
+          .where(eq(keywords.id, existing.id))
+          .returning();
+        return row;
+      });
+      if (restored === LIMIT_REACHED) {
+        sendLimitReached(res);
+        return;
+      }
       res.status(200).json(restored);
       return;
     }
 
-    const [keyword] = await db
-      .insert(keywords)
-      .values({ userId: req.userId!, term, ...(category ? { category } : {}) })
-      .returning();
+    const keyword = await withKeywordCapacity(req.userId!, async (tx) => {
+      const [row] = await tx
+        .insert(keywords)
+        .values({ userId: req.userId!, term, ...(category ? { category } : {}) })
+        .returning();
+      return row;
+    });
+    if (keyword === LIMIT_REACHED) {
+      sendLimitReached(res);
+      return;
+    }
 
     res.status(201).json(keyword);
   } catch (err) {
@@ -123,7 +185,7 @@ keywordsRouter.delete("/:id", async (req, res, next) => {
 
     const archived = await db
       .update(keywords)
-      .set({ removedAt: new Date() })
+      .set({ removedAt: new Date(), pinnedAt: null })
       .where(and(eq(keywords.id, id), eq(keywords.userId, req.userId!), isNull(keywords.removedAt)))
       .returning({ id: keywords.id });
 
@@ -177,11 +239,28 @@ keywordsRouter.patch("/:id/restore", async (req, res, next) => {
       return;
     }
 
-    const [restored] = await db
-      .update(keywords)
-      .set({ removedAt: null })
+    const [archived] = await db
+      .select({ id: keywords.id })
+      .from(keywords)
       .where(and(eq(keywords.id, id), eq(keywords.userId, req.userId!), isNotNull(keywords.removedAt)))
-      .returning();
+      .limit(1);
+    if (!archived) {
+      res.status(404).json({ error: "Keyword archivada no encontrada" });
+      return;
+    }
+
+    const restored = await withKeywordCapacity(req.userId!, async (tx) => {
+      const [row] = await tx
+        .update(keywords)
+        .set({ removedAt: null })
+        .where(and(eq(keywords.id, id), eq(keywords.userId, req.userId!), isNotNull(keywords.removedAt)))
+        .returning();
+      return row;
+    });
+    if (restored === LIMIT_REACHED) {
+      sendLimitReached(res);
+      return;
+    }
 
     if (!restored) {
       res.status(404).json({ error: "Keyword archivada no encontrada" });
@@ -217,6 +296,42 @@ keywordsRouter.patch("/:id/auto-collect", async (req, res, next) => {
       .update(keywords)
       .set({ autoCollectPaused: parsed.data.paused })
       .where(and(eq(keywords.id, id), eq(keywords.userId, req.userId!)))
+      .returning();
+
+    if (!updated) {
+      res.status(404).json({ error: "Keyword no encontrada" });
+      return;
+    }
+
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+const pinSchema = z.object({
+  pinned: z.boolean(),
+});
+
+/** PATCH /:id/pin — pins or unpins an active keyword owned by the authenticated user. */
+keywordsRouter.patch("/:id/pin", async (req, res, next) => {
+  try {
+    const id = parseIdParam(req);
+    if (id === null) {
+      res.status(400).json({ error: "ID inválido" });
+      return;
+    }
+
+    const parsed = pinSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+      return;
+    }
+
+    const [updated] = await db
+      .update(keywords)
+      .set({ pinnedAt: parsed.data.pinned ? new Date() : null })
+      .where(and(eq(keywords.id, id), eq(keywords.userId, req.userId!), isNull(keywords.removedAt)))
       .returning();
 
     if (!updated) {
