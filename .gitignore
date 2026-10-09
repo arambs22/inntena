@@ -30,9 +30,3 @@ postgres-data/
 
 # Test / coverage
 coverage/
-
-.claude/
-CLAUDE.md
-INTERVIEW_STORIES.txt
-
-/superpowers/

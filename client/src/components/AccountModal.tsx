@@ -102,7 +102,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
         <button
           type="submit"
           disabled={changing}
-          className="w-full rounded bg-primary py-2 text-sm font-medium text-surface hover:bg-primary-hover disabled:opacity-50"
+          className="w-full rounded bg-primary-solid py-2 text-sm font-medium text-on-primary hover:bg-primary-solid-hover disabled:opacity-50"
         >
           {changing ? t.account.changePassword.submitting : t.account.changePassword.submit}
         </button>
@@ -123,7 +123,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
         <button
           type="submit"
           disabled={deleting}
-          className="w-full rounded border border-primary py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+          className="w-full rounded border border-primary py-2 text-sm font-medium text-primary hover:bg-primary-tint disabled:opacity-50"
         >
           {deleting ? t.account.deleteAccount.submitting : t.account.deleteAccount.submit}
         </button>

@@ -79,6 +79,7 @@ export function TrendChart({ series }: TrendChartProps) {
             dataKey={seriesKey(region)}
             name={regionLabel(t, region)}
             stroke={SERIES_COLORS[index]}
+            strokeDasharray={index === 2 ? "6 4" : undefined}
             strokeWidth={2}
             dot={false}
           />

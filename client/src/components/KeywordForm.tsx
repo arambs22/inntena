@@ -60,7 +60,7 @@ export function KeywordForm({ onCreated }: KeywordFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="rounded bg-primary px-4 py-1.5 text-sm font-medium text-surface hover:bg-primary-hover disabled:opacity-50"
+        className="rounded bg-primary-solid px-4 py-1.5 text-sm font-medium text-on-primary hover:bg-primary-solid-hover disabled:opacity-50"
       >
         {submitting ? t.keywordForm.submitting : t.keywordForm.submit}
       </button>

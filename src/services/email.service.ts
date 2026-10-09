@@ -8,11 +8,11 @@ if (env.SENDGRID_API_KEY) {
 
 /** Mirrors the light-theme tokens in client/src/index.css — emails render as their own static document, so the palette is duplicated here as literal hex rather than shared at build time. */
 const COLORS = {
-  bg: "#ece0c7",
-  surface: "#f7eada",
-  text: "#3a2a1e",
-  textMuted: "#7a6552",
-  primary: "#c1502e",
+  bg: "#f6ecec",
+  surface: "#fffafa",
+  text: "#241f1f",
+  textMuted: "#6b5e5d",
+  primary: "#c8252f",
 };
 
 /**

@@ -23,7 +23,7 @@ export function VerificationBanner() {
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border bg-primary/10 px-6 py-2 text-sm text-text">
+    <div className="flex items-center justify-between gap-3 border-b border-border bg-primary-tint px-6 py-2 text-sm text-text">
       <span>{t.auth.verificationBanner.message}</span>
       {resent ? (
         <span className="text-text-muted">{t.auth.verificationBanner.resent}</span>

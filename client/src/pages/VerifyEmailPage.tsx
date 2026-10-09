@@ -51,7 +51,7 @@ export function VerifyEmailPage() {
               type="button"
               onClick={handleConfirm}
               disabled={status === "confirming"}
-              className="w-full rounded bg-primary py-2 text-sm font-medium text-surface hover:bg-primary-hover disabled:opacity-50"
+              className="w-full rounded bg-primary-solid py-2 text-sm font-medium text-on-primary hover:bg-primary-solid-hover disabled:opacity-50"
             >
               {status === "confirming" ? t.auth.verifyEmail.confirming : t.auth.verifyEmail.confirm}
             </button>

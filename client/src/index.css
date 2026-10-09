@@ -2,30 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Color tokens. The red is split in two on purpose: `primary` is the accent for
+ * text, borders and tints (tuned to reach WCAG AA as small text on `bg`/`surface`),
+ * while `primary-solid` is the fill behind `on-primary` text on buttons (tuned for
+ * white-on-red contrast). The brand red of the design reference (#f23843) reaches
+ * neither on its own, so a single token could not serve both roles.
+ */
 :root {
-  --color-bg: #ece0c7;
-  --color-surface: #f7eada;
-  --color-text: #3a2a1e;
-  --color-text-muted: #7a6552;
-  --color-primary: #c1502e;
-  --color-primary-hover: #a63f22;
-  --color-border: #e8d2ae;
-  --color-rise: #5c6b47;
-  --color-series-2: #3e7c74;
-  --color-series-3: #c9a227;
+  --color-bg: #f6ecec;
+  --color-surface: #fffafa;
+  --color-text: #241f1f;
+  --color-text-muted: #6b5e5d;
+  --color-primary: #c8252f;
+  --color-primary-solid: #c8252f;
+  --color-primary-solid-hover: #b81f2c;
+  --color-on-primary: #ffffff;
+  /*
+   * Soft red tint and hairline, derived from `primary`. Tailwind 3 cannot apply opacity
+   * modifiers (`bg-primary/10`) to colors defined as `var(--x)` and drops such classes
+   * silently, so the translucent variants are tokens of their own. Defined once on :root,
+   * they resolve against the active theme's `primary` because `.dark` sits on the same element.
+   */
+  --color-primary-tint: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --color-primary-line: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  --color-border: #e6d5d5;
+  --color-rise: #4f7a4a;
+  --color-series-2: #241f1f;
+  --color-series-3: #7a6c6b;
+  /* The auth scene panel is dark in both themes, so these two do not change with the theme. */
+  --color-scene: #141110;
+  --color-scene-star: #fbeded;
 }
 
 :root.dark {
-  --color-bg: #241a14;
-  --color-surface: #2f231c;
-  --color-text: #f3e6d3;
-  --color-text-muted: #b79c82;
-  --color-primary: #e17b4c;
-  --color-primary-hover: #f0925f;
-  --color-border: #4a382c;
-  --color-rise: #8fa06b;
-  --color-series-2: #5fa79d;
-  --color-series-3: #e0bb55;
+  --color-bg: #1f1b1a;
+  --color-surface: #2a2423;
+  --color-text: #fbeded;
+  --color-text-muted: #b9a9a8;
+  --color-primary: #ff5560;
+  --color-primary-solid: #dc2b37;
+  --color-primary-solid-hover: #cc2834;
+  --color-on-primary: #ffffff;
+  --color-border: #3d3433;
+  --color-rise: #8fb08a;
+  --color-series-2: #fbeded;
+  --color-series-3: #9a8d8c;
 }
 
 @layer base {

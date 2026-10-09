@@ -15,5 +15,5 @@ const SIZE_CLASS: Record<NonNullable<FormErrorProps["size"]>, string> = {
 
 /** The standard inline error banner shown below a form's fields, used by every auth page and modal in the app. */
 export function FormError({ message, size = "sm" }: FormErrorProps) {
-  return <p className={`rounded border border-primary/30 bg-primary/10 p-2 text-primary ${SIZE_CLASS[size]}`}>{message}</p>;
+  return <p className={`rounded border border-primary-line bg-primary-tint p-2 text-primary ${SIZE_CLASS[size]}`}>{message}</p>;
 }

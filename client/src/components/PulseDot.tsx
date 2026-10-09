@@ -6,8 +6,8 @@ interface PulseDotProps {
 export function PulseDot({ className = "h-2.5 w-2.5" }: PulseDotProps) {
   return (
     <span className={`relative inline-flex ${className}`}>
-      <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-      <span className={`relative inline-flex rounded-full bg-primary ${className}`} />
+      <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-solid opacity-75" />
+      <span className={`relative inline-flex rounded-full bg-primary-solid ${className}`} />
     </span>
   );
 }

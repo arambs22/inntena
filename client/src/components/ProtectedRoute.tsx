@@ -8,7 +8,7 @@ export function ProtectedRoute() {
   const { t } = useLanguage();
 
   if (loading) {
-    return <p className="p-6 text-slate-500">{t.common.loading}</p>;
+    return <p className="p-6 text-text-muted">{t.common.loading}</p>;
   }
 
   if (!user) {

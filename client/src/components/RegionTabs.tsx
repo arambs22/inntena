@@ -26,7 +26,7 @@ export function RegionTabs({ added, active, onToggle, onRemove, onAdd }: RegionT
 
   function tabClass(isActive: boolean) {
     return `flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${
-      isActive ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface text-text-muted"
+      isActive ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-text-muted"
     }`;
   }
 

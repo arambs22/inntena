@@ -98,6 +98,16 @@ export interface Translations {
     pause: string;
     resume: string;
     archive: string;
+    pin: string;
+    unpin: string;
+    searchPlaceholder: string;
+    searchAria: string;
+    clearSearch: string;
+    noMatches: (query: string) => string;
+    sortLabel: string;
+    sortOptions: { newest: string; oldest: string; alphabetical: string; category: string };
+    limitCounter: (count: number, max: number) => string;
+    limitReached: (max: number) => string;
   };
   blocked: {
     ariaLabel: string;
@@ -127,6 +137,8 @@ export interface Translations {
     noDataYet: string;
     relatedRising: string;
     keywordsError: string;
+    chartRangeAria: string;
+    chartRangeOption: (days: number) => string;
   };
   relatedQueries: {
     empty: string;
@@ -147,6 +159,9 @@ export interface Translations {
     deleteForever: string;
     deleting: string;
     confirmDelete: (term: string) => string;
+    searchPlaceholder: string;
+    searchAria: string;
+    noMatches: (query: string) => string;
   };
   regions: Record<string, string>;
 }
@@ -318,6 +333,16 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       pause: "Pausar",
       resume: "Reanudar",
       archive: "Archivar",
+      pin: "Fijar",
+      unpin: "Quitar fijado",
+      searchPlaceholder: "Buscar en tus keywords...",
+      searchAria: "Buscar keywords",
+      clearSearch: "Borrar búsqueda",
+      noMatches: (query) => `Ninguna keyword coincide con "${query}".`,
+      sortLabel: "Ordenar por",
+      sortOptions: { newest: "Más reciente", oldest: "Más antigua", alphabetical: "A-Z", category: "Categoría" },
+      limitCounter: (count, max) => `${count}/${max} keywords`,
+      limitReached: (max) => `Llegaste al máximo de ${max} keywords activas. Archiva alguna para agregar otra.`,
     },
     blocked: {
       ariaLabel: "Recolección bloqueada — pasa el mouse para ver el detalle",
@@ -348,6 +373,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       noDataYet: "Todavía no hay datos recolectados para esta keyword.",
       relatedRising: "Related queries en alza",
       keywordsError: "No se pudieron cargar tus keywords. Intenta de nuevo en unos minutos.",
+      chartRangeAria: "Rango de tiempo del gráfico",
+      chartRangeOption: (days) => `${days} días`,
     },
     relatedQueries: {
       empty: "Sin related queries en alza todavía.",
@@ -369,6 +396,9 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       deleting: "Eliminando...",
       confirmDelete: (term) =>
         `Vas a perder todos los datos que has recolectado para "${term}". Esta acción no se puede deshacer. ¿Estás seguro?`,
+      searchPlaceholder: "Buscar en tu historial...",
+      searchAria: "Buscar en el historial",
+      noMatches: (query) => `Nada en tu historial coincide con "${query}".`,
     },
     regions: REGION_NAMES_ES,
   },
@@ -470,6 +500,16 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       pause: "Pause",
       resume: "Resume",
       archive: "Archive",
+      pin: "Pin",
+      unpin: "Unpin",
+      searchPlaceholder: "Search your keywords...",
+      searchAria: "Search keywords",
+      clearSearch: "Clear search",
+      noMatches: (query) => `No keyword matches "${query}".`,
+      sortLabel: "Sort by",
+      sortOptions: { newest: "Newest", oldest: "Oldest", alphabetical: "A-Z", category: "Category" },
+      limitCounter: (count, max) => `${count}/${max} keywords`,
+      limitReached: (max) => `You've reached the limit of ${max} active keywords. Archive one to add another.`,
     },
     blocked: {
       ariaLabel: "Collection blocked — hover for details",
@@ -500,6 +540,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       noDataYet: "No data collected for this keyword yet.",
       relatedRising: "Rising related queries",
       keywordsError: "Couldn't load your keywords. Try again in a few minutes.",
+      chartRangeAria: "Chart time range",
+      chartRangeOption: (days) => `${days} days`,
     },
     relatedQueries: {
       empty: "No rising related queries yet.",
@@ -521,6 +563,9 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       deleting: "Deleting...",
       confirmDelete: (term) =>
         `You're about to lose all the data collected for "${term}". This can't be undone. Are you sure?`,
+      searchPlaceholder: "Search your history...",
+      searchAria: "Search history",
+      noMatches: (query) => `Nothing in your history matches "${query}".`,
     },
     regions: REGION_NAMES_EN,
   },
