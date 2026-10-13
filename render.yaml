@@ -36,3 +36,13 @@ services:
         sync: false
       - key: SENDGRID_FROM_EMAIL
         sync: false
+      # Etsy integration (optional). Both set = Etsy supply data is enabled; remove either to switch it off.
+      - key: ETSY_API_KEY
+        sync: false
+      - key: ETSY_API_SECRET
+        sync: false
+      # Public contact details for the footer and legal pages (optional).
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: OPERATOR_NAME
+        sync: false

@@ -10,7 +10,7 @@ describe("POST /api/auth/register", () => {
 
     const res = await request(app)
       .post("/api/auth/register")
-      .send({ email: "new-user@example.com", password: "password123" });
+      .send({ email: "new-user@example.com", password: "password123", acceptTerms: true });
 
     expect(res.status).toBe(201);
     expect(res.body.emailVerified).toBe(false);
@@ -25,7 +25,7 @@ describe("POST /api/auth/register", () => {
 
     const res = await request(app)
       .post("/api/auth/register")
-      .send({ email: "resilient-user@example.com", password: "password123" });
+      .send({ email: "resilient-user@example.com", password: "password123", acceptTerms: true });
 
     expect(res.status).toBe(201);
     expect(res.body.emailVerified).toBe(false);

@@ -7,6 +7,8 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   emailVerified: boolean("email_verified").notNull().default(false),
   historyRetentionDays: integer("history_retention_days").notNull().default(15),
+  termsAcceptedAt: timestamp("terms_accepted_at"),
+  termsVersion: text("terms_version"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -111,3 +113,14 @@ export const keywordCollectionStatus = pgTable(
     uniqueKeywordGeo: unique().on(table.keywordId, table.geo),
   })
 );
+
+/**
+ * Latest Etsy active-listing count per normalized search term. Shared by all users: a term costs one Etsy
+ * request per refresh window no matter how many people track it. Deliberately one row per term, overwritten on
+ * refresh — Etsy's API terms forbid keeping Etsy content longer than needed, so no history is stored.
+ */
+export const etsySupply = pgTable("etsy_supply", {
+  term: text("term").primaryKey(),
+  listingCount: integer("listing_count").notNull(),
+  fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+});

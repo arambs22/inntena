@@ -36,6 +36,13 @@
       "when": 1791520599277,
       "tag": "0004_panoramic_multiple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791867968013,
+      "tag": "0005_dashing_kate_bishop",
+      "breakpoints": true
     }
   ]
 }

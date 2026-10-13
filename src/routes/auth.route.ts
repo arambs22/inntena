@@ -1,10 +1,11 @@
 import { Router, type Response } from "express";
 import { z } from "zod";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { users, authTokens } from "../db/schema.js";
 import { hashPassword, verifyPassword, signToken } from "../utils/auth.js";
 import { env } from "../config/env.js";
+import { CURRENT_TERMS_VERSION } from "../config/terms.js";
 import { authRateLimiter } from "../middleware/rateLimit.middleware.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { createAuthToken, consumeAuthToken } from "../services/authToken.service.js";
@@ -22,6 +23,7 @@ const USER_PUBLIC_COLUMNS = {
   email: users.email,
   historyRetentionDays: users.historyRetentionDays,
   emailVerified: users.emailVerified,
+  termsAccepted: sql<boolean>`coalesce(${users.termsVersion} = ${CURRENT_TERMS_VERSION}, false)`,
 };
 
 /** Picks the same public-safe fields off a full user row — for the few spots (like login) that fetch the full row for a purpose (password verification) that USER_PUBLIC_COLUMNS can't cover. */
@@ -31,6 +33,7 @@ function toPublicUser(user: typeof users.$inferSelect) {
     email: user.email,
     historyRetentionDays: user.historyRetentionDays,
     emailVerified: user.emailVerified,
+    termsAccepted: user.termsVersion === CURRENT_TERMS_VERSION,
   };
 }
 
@@ -50,10 +53,15 @@ const credentialsSchema = z.object({
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
 });
 
+/** Registration needs a deliberate click on the terms: only the literal boolean `true` is accepted. */
+const registerSchema = credentialsSchema.extend({
+  acceptTerms: z.literal(true, { message: "Debes aceptar los Términos de uso y la Política de privacidad" }),
+});
+
 /** POST /register — creates a new user account and sets the auth cookie. */
 authRouter.post("/register", authRateLimiter, async (req, res, next) => {
   try {
-    const parsed = credentialsSchema.safeParse(req.body);
+    const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.flatten().fieldErrors });
       return;
@@ -67,7 +75,10 @@ authRouter.post("/register", authRateLimiter, async (req, res, next) => {
     }
 
     const passwordHash = await hashPassword(password);
-    const [user] = await db.insert(users).values({ email, passwordHash }).returning(USER_PUBLIC_COLUMNS);
+    const [user] = await db
+      .insert(users)
+      .values({ email, passwordHash, termsAcceptedAt: new Date(), termsVersion: CURRENT_TERMS_VERSION })
+      .returning(USER_PUBLIC_COLUMNS);
 
     try {
       const verificationToken = await createAuthToken(user!.id, "verify_email");
@@ -242,6 +253,24 @@ authRouter.get("/me", requireAuth, async (req, res, next) => {
     if (!user) {
       // A valid token for a user deleted since it was issued (e.g. from another tab/device).
       res.status(401).json({ error: "No autenticado" });
+      return;
+    }
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** POST /accept-terms — records that the authenticated user accepted the current Terms of Use and Privacy Policy. */
+authRouter.post("/accept-terms", requireAuth, async (req, res, next) => {
+  try {
+    const [user] = await db
+      .update(users)
+      .set({ termsAcceptedAt: new Date(), termsVersion: CURRENT_TERMS_VERSION })
+      .where(eq(users.id, req.userId!))
+      .returning(USER_PUBLIC_COLUMNS);
+    if (!user) {
+      res.status(404).json({ error: "Usuario no encontrado" });
       return;
     }
     res.json(user);

@@ -30,6 +30,11 @@ const envSchema = z.object({
   SENDGRID_API_KEY: z.string().optional(),
   SENDGRID_FROM_EMAIL: z.string().email().optional(),
   APP_URL: z.string().url().default("http://localhost:5173"),
+  // Public contact details shown in the footer and on the legal pages. Optional: SUPPORT_EMAIL falls back to
+  // SENDGRID_FROM_EMAIL, and without either the address is simply omitted. Kept in the environment so no personal
+  // address ever has to be committed to the repository.
+  SUPPORT_EMAIL: z.string().email().optional(),
+  OPERATOR_NAME: z.string().min(1).optional(),
 });
 
 function loadEnv() {
