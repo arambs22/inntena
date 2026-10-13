@@ -15,13 +15,18 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    if (!accepted) {
+      setError(t.authTerms.mustAccept);
+      return;
+    }
     setSubmitting(true);
     try {
-      await register(email, password);
+      await register(email, password, accepted);
       navigate("/dashboard");
     } catch (err) {
       setError(getErrorMessage(err, t.auth.genericError));
@@ -59,6 +64,21 @@ export function RegisterPage() {
           />
           <p className="mt-1 text-xs text-text-muted">{t.auth.register.passwordHint}</p>
         </div>
+        <label className="flex items-start gap-2 text-sm text-text">
+          <input
+            type="checkbox"
+            checked={accepted}
+            onChange={(e) => setAccepted(e.target.checked)}
+            aria-required="true"
+            className="mt-0.5"
+          />
+          <span>
+            {t.authTerms.acceptPrefix}{" "}
+            <a href="/terms" target="_blank" rel="noreferrer" className="text-primary underline">{t.authTerms.termsLink}</a>{" "}
+            {t.authTerms.and}{" "}
+            <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary underline">{t.authTerms.privacyLink}</a>
+          </span>
+        </label>
         <button
           type="submit"
           disabled={submitting}

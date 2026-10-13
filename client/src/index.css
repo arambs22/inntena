@@ -26,8 +26,9 @@
    */
   --color-primary-tint: color-mix(in srgb, var(--color-primary) 12%, transparent);
   --color-primary-line: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  --color-rise-tint: color-mix(in srgb, var(--color-rise) 5%, transparent);
   --color-border: #e6d5d5;
-  --color-rise: #4f7a4a;
+  --color-rise: #41683c;
   --color-series-2: #241f1f;
   --color-series-3: #7a6c6b;
   /* The auth scene panel is dark in both themes, so these two do not change with the theme. */

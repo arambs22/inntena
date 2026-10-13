@@ -142,12 +142,24 @@ interview if asked about production debugging.
 
 ### Optional third-party integrations (Etsy, Fal.ai)
 
-Any future integration with a paid or key-gated third-party API (Etsy
-Open API v3, Fal.ai/Flux for image generation) must **always** be
-optional and use the individual user's own API key — never a project-wide
-key, and never a requirement for the core app to function. This protects
-the core promise: the project must remain runnable with zero mandatory
-external accounts.
+Any integration with a key-gated third-party API (Etsy Open API v3,
+Fal.ai/Flux for image generation) must be **optional**: with no
+credentials configured the feature disappears completely and the core
+application is unaffected, so the project stays runnable with zero
+mandatory external accounts.
+
+*Updated 2026-10-09.* An earlier version of this section required every
+integration to use each end user's own key. The Etsy integration instead
+uses **one key per instance**, supplied through environment variables: the
+hosted demo uses its owner's key, and anyone self-hosting registers their
+own Etsy developer app. Per-user keys would have meant storing encrypted
+third-party secrets and a settings screen for every user, for a feature
+whose Etsy usage is a single aggregate count per search term. Etsy's API
+terms shaped the design in other ways too: counts are never shown after
+24 hours, only the latest value is kept, one request per term is shared by
+all users, a trademark notice is displayed, and users accept Terms of Use
+and a Privacy Policy. The full design and the reasons are in
+`docs/superpowers/specs/2026-10-09-etsy-supply-design.md`.
 
 ## Alternatives considered and rejected
 

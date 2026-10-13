@@ -39,7 +39,7 @@ theme; light uses the same hues, lighter.
 | `on-primary` | `#ffffff` | `#ffffff` | text on a `primary-solid` fill |
 | `primary-tint` | 12% of `primary` | 12% of `primary` | soft red background (active tab, banner, error box) |
 | `primary-line` | 35% of `primary` | 35% of `primary` | soft red border (error box) |
-| `rise` | `#8fb08a` | `#4f7a4a` | **only** "rising" values (growth). Never decorative |
+| `rise` | `#8fb08a` | `#41683c` | **only** "rising" values (growth). Never decorative |
 | `series-2`, `series-3` | `#fbeded`, `#9a8d8c` | `#241f1f`, `#7a6c6b` | chart lines 2 and 3 (line 1 is `primary`) |
 | `scene`, `scene-star` | `#141110`, `#fbeded` | same | the auth panel; dark in both themes |
 

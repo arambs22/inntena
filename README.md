@@ -31,6 +31,10 @@ to self host.
   protected internal endpoint) pulls fresh Google Trends data every day,
   with built-in rate-limit backoff and a circuit breaker so it degrades
   gracefully instead of getting the server blocked by Google.
+- **Etsy supply and opportunity verdict (optional)** — with an Etsy API key
+  configured, each keyword also shows how many active Etsy listings match
+  it, and a verdict (Opportunity, Promising, Steady, Crowded, Cooling) that
+  combines that supply with the Google Trends demand momentum.
 - **English/Spanish UI**, light/dark theme, both persisted per browser.
 
 ## Tech Stack
@@ -92,6 +96,10 @@ openssl rand -base64 48
    console instead of sent, which is fine for local dev. Sent over
    SendGrid's HTTPS API rather than SMTP, since most free-tier hosts
    (including Render) block outbound SMTP ports.
+
+   `ETSY_API_KEY` and `ETSY_API_SECRET` (both required to enable Etsy
+   features), `SUPPORT_EMAIL` and `OPERATOR_NAME` are optional too. See
+   "Etsy supply data" below.
 
 5. Start PostgreSQL with Docker Compose:
 ```bash
@@ -158,6 +166,21 @@ collection yourself instead:
 npm run collect -- --geo=US
 ```
 
+### Etsy supply data (optional)
+
+With `ETSY_API_KEY` and `ETSY_API_SECRET` set, each keyword also shows how
+many active Etsy listings match it, and a verdict that combines that supply
+with Google Trends demand. Without them nothing about Etsy appears. You need
+your own Etsy developer app (https://www.etsy.com/developers); the app uses
+the public listings endpoint only, caches a single count per term for at most
+24 hours, and shows Etsy's required trademark notice. The request queue, rate
+guard and circuit breaker live in server memory, so the feature assumes a
+single server instance (several instances would multiply Etsy traffic and
+keep separate breaker state). If you host your own
+instance, read Etsy's API Terms of Use and review the Terms and Privacy pages
+(`client/src/lib/legalContent.ts`), which describe the reference deployment
+and must be true of yours.
+
 ## Project Status
 
 The core product is complete and live: multi-user auth, the full trend
@@ -165,17 +188,14 @@ dashboard (multi-region comparison, keyword history, i18n), hardened and
 deployed to production on Render. See the commit history for detailed
 progress.
 
-**Next up:** Etsy Open API v3 integration, to cross-reference trending
-keywords against real listing counts and measure actual market saturation
-(demand vs. supply), not just search volume on its own.
+The Etsy Open API v3 integration (listing counts and an opportunity
+verdict, demand vs. supply) is built and optional; it only appears when an
+instance has an Etsy key configured.
 
 ## Roadmap
 
 Ideas that are documented but intentionally **not** built yet:
 
-- **Etsy Open API v3 integration** — cross-reference trending keywords with
-  real Etsy listings to measure market saturation. The most valuable of the
-  three below; next in line.
 - **AI prompt suggestions** — once a trend is detected, suggest generation
   prompts (for tools like Flux/ComfyUI) tailored to that aesthetic.
 - **Browser extension** — an overlay directly on Etsy's own pages, similar

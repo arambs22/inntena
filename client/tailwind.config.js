@@ -20,6 +20,7 @@ export default {
         "scene-star": "var(--color-scene-star)",
         border: "var(--color-border)",
         rise: "var(--color-rise)",
+        "rise-tint": "var(--color-rise-tint)",
       },
       fontFamily: {
         display: ['"Zilla Slab"', "serif"],

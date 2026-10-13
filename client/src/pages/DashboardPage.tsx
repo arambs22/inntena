@@ -21,6 +21,10 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { regionLabel } from "../lib/i18n";
 import type { Keyword, KeywordTrend, KeywordRelated } from "../lib/types";
+import { useSupply } from "../lib/useSupply";
+import { buildInsights } from "../lib/keywordInsights";
+import { SupplyStrip } from "../components/SupplyStrip";
+import { AppFooter } from "../components/AppFooter";
 
 const ACTIVE_REGIONS_KEY = "inntena_regions_active";
 /** Where the added-region list lived before it moved to the backend. Read once, migrated, then dropped. */
@@ -59,6 +63,7 @@ export function DashboardPage() {
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>(loadSortMode);
   const [maxKeywords, setMaxKeywords] = useState<number | null>(null);
+  const { enabled: etsyEnabled, items: supplyItems } = useSupply(keywords.map((keyword) => keyword.id));
   const hydratedRegions = useRef(false);
 
   function handleRangeChange(next: ChartRange) {
@@ -216,6 +221,9 @@ export function DashboardPage() {
   const selectedKeyword = keywords.find((k) => k.id === selectedId) ?? null;
   const arranged = arrangeKeywords(keywords, query, sortMode);
   const atLimit = maxKeywords !== null && keywords.length >= maxKeywords;
+  const demandRegion = activeRegions[0];
+  const insights = etsyEnabled ? buildInsights(keywords, demandRegion === undefined ? undefined : trendsByRegion[demandRegion], supplyItems) : undefined;
+  const selectedInsight = selectedKeyword && insights ? insights.get(selectedKeyword.id) : undefined;
 
   const chartSeries = activeRegions.map((region) => ({
     region,
@@ -275,6 +283,7 @@ export function DashboardPage() {
                 <KeywordList
                   keywords={arranged}
                   query={query}
+                  insights={insights}
                   activeRegions={activeRegions}
                   onChanged={() => refetchKeywords()}
                   selectedId={selectedId}
@@ -297,7 +306,7 @@ export function DashboardPage() {
                 {t.dashboard.loadingTrends}
               </p>
             ) : (
-              <div className="grid h-full grid-rows-[auto_auto_1fr_auto_auto] gap-2">
+              <div className="grid h-full grid-rows-[auto_auto_auto_1fr_auto_auto] gap-2">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted">{t.dashboard.trend}</h2>
                   <div className="flex items-center gap-3">
@@ -312,6 +321,11 @@ export function DashboardPage() {
                     ? t.dashboard.dataAvailableIn(selectedKeyword.regions.map((code) => regionLabel(t, code)).join(", "))
                     : t.dashboard.noDataYet}
                 </p>
+                {selectedInsight && demandRegion !== undefined ? (
+                  <SupplyStrip insight={selectedInsight} regionName={regionLabel(t, demandRegion)} />
+                ) : (
+                  <div />
+                )}
                 <div className="min-h-[260px]">
                   <TrendChart series={visibleSeries} />
                 </div>
@@ -324,6 +338,7 @@ export function DashboardPage() {
           </div>
         </div>
       </main>
+      <AppFooter showEtsyNotice={etsyEnabled} />
     </div>
   );
 }
