@@ -3,6 +3,7 @@ import { db } from "../db/client.js";
 import { keywords, trendSnapshots, relatedQueries } from "../db/schema.js";
 import { and, eq, isNull, desc, inArray } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { sortByGrowthDesc } from "../utils/relatedGrowth.js";
 
 export const trendsRouter = Router();
 
@@ -97,7 +98,9 @@ trendsRouter.get("/related", requireAuth, async (req, res, next) => {
         id: kw.id,
         term: kw.term,
         category: kw.category,
-        rising: latestRelatedQueriesFor(allRelated, kw.id).map((r) => ({ query: r.query, growthValue: r.growthValue })),
+        rising: sortByGrowthDesc(
+          latestRelatedQueriesFor(allRelated, kw.id).map((r) => ({ query: r.query, growthValue: r.growthValue }))
+        ),
       }))
       .filter((kw) => kw.rising.length > 0);
 

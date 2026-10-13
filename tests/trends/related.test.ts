@@ -37,3 +37,47 @@ describe("GET /api/related", () => {
     expect(queries).not.toContain("old rising query");
   });
 });
+
+describe("related queries ordering", () => {
+  // All rows share one collectedAt, exactly as a real collection run inserts them in a single batch.
+  // Inserted out of order on purpose, so only an explicit sort can produce the expected result.
+  const collectedAt = new Date("2026-08-27T10:00:00Z");
+  const unsorted = [
+    { query: "small", growthValue: "40" },
+    { query: "breakout", growthValue: "836500" },
+    { query: "medium", growthValue: "250" },
+    { query: "large", growthValue: "59000" },
+  ];
+  const expectedOrder = ["breakout", "large", "medium", "small"];
+
+  test("GET /api/related returns each keyword's rising queries from the largest growth to the smallest", async () => {
+    const agent = request.agent(app);
+    const user = await createTestUser({ email: "related-order@example.com", password: "password123" });
+    await agent.post("/api/auth/login").send({ email: "related-order@example.com", password: "password123" });
+    const [keyword] = await db.insert(keywords).values({ userId: user.id, term: "ordering" }).returning();
+    await db
+      .insert(relatedQueries)
+      .values(unsorted.map((r) => ({ keywordId: keyword!.id, geo: "US", collectedAt, ...r })));
+
+    const res = await agent.get("/api/related?geo=US");
+
+    const kw = res.body.find((r: { id: number }) => r.id === keyword!.id);
+    expect(kw.rising.map((r: { query: string }) => r.query)).toEqual(expectedOrder);
+  });
+
+  test("GET /api/keywords/:id/related sorts each region's column the same way", async () => {
+    const agent = request.agent(app);
+    const user = await createTestUser({ email: "related-order-hist@example.com", password: "password123" });
+    await agent.post("/api/auth/login").send({ email: "related-order-hist@example.com", password: "password123" });
+    const [keyword] = await db.insert(keywords).values({ userId: user.id, term: "ordering history" }).returning();
+    await db
+      .insert(relatedQueries)
+      .values(unsorted.map((r) => ({ keywordId: keyword!.id, geo: "US", collectedAt, ...r })));
+
+    const res = await agent.get(`/api/keywords/${keyword!.id}/related`);
+
+    expect(res.status).toBe(200);
+    const column = res.body.columns.find((c: { region: string }) => c.region === "US");
+    expect(column.rising.map((r: { query: string }) => r.query)).toEqual(expectedOrder);
+  });
+});

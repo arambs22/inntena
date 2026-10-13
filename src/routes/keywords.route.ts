@@ -5,6 +5,7 @@ import { db } from "../db/client.js";
 import { keywords, trendSnapshots, relatedQueries, users, keywordCollectionStatus } from "../db/schema.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { MAX_ACTIVE_KEYWORDS_PER_USER } from "../config/limits.js";
+import { sortByGrowthDesc } from "../utils/relatedGrowth.js";
 import { MAX_CONSECUTIVE_FAILURES } from "../services/trendCollector.service.js";
 
 export const keywordsRouter = Router();
@@ -426,7 +427,7 @@ keywordsRouter.get("/:id/related", async (req, res, next) => {
       id: keyword.id,
       term: keyword.term,
       category: keyword.category,
-      columns: Array.from(byRegion.entries()).map(([region, rising]) => ({ region, rising })),
+      columns: Array.from(byRegion.entries()).map(([region, rising]) => ({ region, rising: sortByGrowthDesc(rising) })),
     });
   } catch (err) {
     next(err);

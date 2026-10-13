@@ -145,6 +145,13 @@ export interface Translations {
     noDataForColumn: string;
     viewAll: (n: number) => string;
     modalTitle: (region: string) => string;
+    queryHeader: string;
+    growthHeader: string;
+    breakout: string;
+    helpLabel: string;
+    helpGrowth: string;
+    helpBreakout: string;
+    helpCaveat: string;
   };
   history: {
     title: string;
@@ -162,6 +169,54 @@ export interface Translations {
     searchPlaceholder: string;
     searchAria: string;
     noMatches: (query: string) => string;
+  };
+  supply: {
+    listings: (count: string) => string;
+    updatedAgo: (hours: number) => string;
+    checking: string;
+    unavailable: string;
+    noData: string;
+    demandTitle: string;
+    supplyTitle: string;
+    verdictTitle: string;
+    demandIn: (region: string) => string;
+    last14Days: string;
+    sourceEtsy: string;
+    helpLabel: string;
+    helpDemand: string;
+    helpSupply: (low: string, high: string) => string;
+    helpVerdict: string;
+    helpCaveat: string;
+    momentum: { rising: string; steady: string; cooling: string; unknown: string };
+    verdicts: { opportunity: string; promising: string; steady: string; crowded: string; cooling: string };
+    verdictSentences: { opportunity: string; promising: string; steady: string; crowded: string; cooling: string };
+  };
+  footer: {
+    terms: string;
+    privacy: string;
+    support: (email: string) => string;
+    etsyNotice: string;
+  };
+  termsGate: {
+    title: string;
+    intro: string;
+    checkbox: string;
+    accept: string;
+    accepting: string;
+    logout: string;
+  };
+  authTerms: {
+    acceptPrefix: string;
+    termsLink: string;
+    and: string;
+    privacyLink: string;
+    mustAccept: string;
+  };
+  legal: {
+    backToApp: string;
+    lastUpdated: (version: string) => string;
+    termsTitle: string;
+    privacyTitle: string;
   };
   regions: Record<string, string>;
 }
@@ -381,6 +436,15 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       noDataForColumn: "Sin datos.",
       viewAll: (n) => `Ver todas (+${n})`,
       modalTitle: (region) => `Related queries — ${region}`,
+      queryHeader: "Búsqueda",
+      growthHeader: "Crecimiento",
+      breakout: "Breakout",
+      helpLabel: "¿Qué significan estos números?",
+      helpGrowth:
+        "Cuánto creció el interés de búsqueda de cada frase en los últimos 90 días, comparado con el periodo anterior. Van de mayor a menor crecimiento.",
+      helpBreakout:
+        "\"Breakout\" es un crecimiento enorme (más de 5,000%), normalmente de frases nuevas que antes casi no se buscaban.",
+      helpCaveat: "Ojo: es un porcentaje, no un volumen. Una frase puede subir 500% y seguir con muy pocas búsquedas.",
     },
     history: {
       title: "Historial",
@@ -399,6 +463,71 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       searchPlaceholder: "Buscar en tu historial...",
       searchAria: "Buscar en el historial",
       noMatches: (query) => `Nada en tu historial coincide con "${query}".`,
+    },
+    supply: {
+      listings: (count) => `${count} listings`,
+      updatedAgo: (hours) => (hours < 1 ? "Actualizado hace menos de 1 h" : `Actualizado hace ${hours} h`),
+      checking: "Consultando Etsy…",
+      unavailable: "Datos de Etsy no disponibles",
+      noData: "—",
+      demandTitle: "Demanda",
+      supplyTitle: "Oferta en Etsy",
+      verdictTitle: "Veredicto",
+      demandIn: (region) => `En ${region}`,
+      last14Days: "últimos 14 días",
+      sourceEtsy: "Fuente: Etsy",
+      helpLabel: "¿Cómo se calcula el veredicto?",
+      helpDemand:
+        "Demanda: compara el interés promedio en Google Trends de los últimos 14 días con los 14 anteriores, en la primera región que tienes activa. Un cambio de +15% o más es \"al alza\"; de −15% o menos, \"a la baja\".",
+      helpSupply: (low, high) =>
+        `Oferta: cuántos listings activos hay en Etsy para ese término. Baja: menos de ${low}. Media: hasta ${high}. Alta: más que eso.`,
+      helpVerdict:
+        "Veredicto: demanda al alza con oferta baja es una oportunidad; oferta alta es saturación; demanda a la baja es que se está enfriando.",
+      helpCaveat:
+        "Es una guía aproximada: el conteo de Etsy no se filtra por categoría y puede incluir listings que no tienen que ver.",
+      momentum: { rising: "Al alza", steady: "Estable", cooling: "A la baja", unknown: "Sin datos suficientes" },
+      verdicts: {
+        opportunity: "Oportunidad",
+        promising: "Prometedora",
+        steady: "Estable",
+        crowded: "Saturada",
+        cooling: "Enfriándose",
+      },
+      verdictSentences: {
+        opportunity: "La demanda sube y hay pocos vendedores compitiendo.",
+        promising: "La demanda sube y la competencia es moderada.",
+        steady: "La demanda se mantiene; la competencia es baja o moderada.",
+        crowded: "Ya hay muchos vendedores compitiendo por este término.",
+        cooling: "El interés en este término va a la baja.",
+      },
+    },
+    footer: {
+      terms: "Términos de uso",
+      privacy: "Política de privacidad",
+      support: (email) => `Soporte: ${email}`,
+      etsyNotice:
+        "El término 'Etsy' es una marca comercial de Etsy, Inc. Esta aplicación utiliza la API de Etsy, pero no cuenta con el respaldo de Etsy ni está certificada por Etsy.",
+    },
+    termsGate: {
+      title: "Revisa nuestros términos",
+      intro: "Para seguir usando Inntena debes aceptar los Términos de uso y la Política de privacidad.",
+      checkbox: "He leído y acepto los Términos de uso y la Política de privacidad",
+      accept: "Aceptar y continuar",
+      accepting: "Guardando...",
+      logout: "Cerrar sesión",
+    },
+    authTerms: {
+      acceptPrefix: "Acepto los",
+      termsLink: "Términos de uso",
+      and: "y la",
+      privacyLink: "Política de privacidad",
+      mustAccept: "Debes aceptar los términos para crear una cuenta.",
+    },
+    legal: {
+      backToApp: "Volver a Inntena",
+      lastUpdated: (version) => `Última actualización: ${version}`,
+      termsTitle: "Términos de uso",
+      privacyTitle: "Política de privacidad",
     },
     regions: REGION_NAMES_ES,
   },
@@ -548,6 +677,15 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       noDataForColumn: "No data.",
       viewAll: (n) => `View all (+${n})`,
       modalTitle: (region) => `Related queries — ${region}`,
+      queryHeader: "Search",
+      growthHeader: "Growth",
+      breakout: "Breakout",
+      helpLabel: "What do these numbers mean?",
+      helpGrowth:
+        "How much interest in each search phrase grew over the last 90 days, compared with the previous period. Sorted from the largest growth to the smallest.",
+      helpBreakout:
+        "\"Breakout\" means a huge increase (over 5,000%), usually for new phrases that were barely searched before.",
+      helpCaveat: "Note: this is a percentage, not a volume. A phrase can grow 500% and still have very few searches.",
     },
     history: {
       title: "History",
@@ -566,6 +704,71 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       searchPlaceholder: "Search your history...",
       searchAria: "Search history",
       noMatches: (query) => `Nothing in your history matches "${query}".`,
+    },
+    supply: {
+      listings: (count) => `${count} listings`,
+      updatedAgo: (hours) => (hours < 1 ? "Updated less than 1 h ago" : `Updated ${hours} h ago`),
+      checking: "Checking Etsy…",
+      unavailable: "Etsy data unavailable",
+      noData: "—",
+      demandTitle: "Demand",
+      supplyTitle: "Supply on Etsy",
+      verdictTitle: "Verdict",
+      demandIn: (region) => `In ${region}`,
+      last14Days: "last 14 days",
+      sourceEtsy: "Source: Etsy",
+      helpLabel: "How is the verdict calculated?",
+      helpDemand:
+        "Demand: compares the average Google Trends interest of the last 14 days with the 14 days before, in the first region you have active. A change of +15% or more is \"rising\"; −15% or less is \"cooling\".",
+      helpSupply: (low, high) =>
+        `Supply: how many active Etsy listings match the term. Low: under ${low}. Medium: up to ${high}. High: above that.`,
+      helpVerdict:
+        "Verdict: rising demand with low supply is an opportunity; high supply is crowded; falling demand is cooling.",
+      helpCaveat:
+        "This is a rough guide: the Etsy count is not filtered by category and may include unrelated listings.",
+      momentum: { rising: "Rising", steady: "Steady", cooling: "Cooling", unknown: "Not enough data" },
+      verdicts: {
+        opportunity: "Opportunity",
+        promising: "Promising",
+        steady: "Steady",
+        crowded: "Crowded",
+        cooling: "Cooling",
+      },
+      verdictSentences: {
+        opportunity: "Demand is rising and few sellers are competing.",
+        promising: "Demand is rising and competition is moderate.",
+        steady: "Demand is steady; competition is low to moderate.",
+        crowded: "Many sellers already compete for this term.",
+        cooling: "Interest in this term is fading.",
+      },
+    },
+    footer: {
+      terms: "Terms of Use",
+      privacy: "Privacy Policy",
+      support: (email) => `Support: ${email}`,
+      etsyNotice:
+        "The term 'Etsy' is a trademark of Etsy, Inc. This application uses the Etsy API but is not endorsed or certified by Etsy, Inc.",
+    },
+    termsGate: {
+      title: "Please review our terms",
+      intro: "To keep using Inntena you need to accept the Terms of Use and the Privacy Policy.",
+      checkbox: "I have read and accept the Terms of Use and the Privacy Policy",
+      accept: "Accept and continue",
+      accepting: "Saving...",
+      logout: "Log out",
+    },
+    authTerms: {
+      acceptPrefix: "I accept the",
+      termsLink: "Terms of Use",
+      and: "and the",
+      privacyLink: "Privacy Policy",
+      mustAccept: "You must accept the terms to create an account.",
+    },
+    legal: {
+      backToApp: "Back to Inntena",
+      lastUpdated: (version) => `Last updated: ${version}`,
+      termsTitle: "Terms of Use",
+      privacyTitle: "Privacy Policy",
     },
     regions: REGION_NAMES_EN,
   },
