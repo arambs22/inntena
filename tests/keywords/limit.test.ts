@@ -1,9 +1,11 @@
 import { describe, expect, test } from "vitest";
 import request from "supertest";
+import { Client } from "pg";
+import type { AddressInfo } from "node:net";
 import { and, count, eq, isNull } from "drizzle-orm";
 import { app } from "../helpers/testApp.js";
 import { createTestUser } from "../helpers/factories.js";
-import { db } from "../../src/db/client.js";
+import { db, pool } from "../../src/db/client.js";
 import { keywords } from "../../src/db/schema.js";
 import { MAX_ACTIVE_KEYWORDS_PER_USER } from "../../src/config/limits.js";
 
@@ -14,6 +16,25 @@ async function loginAgent(email: string) {
   const agent = request.agent(app);
   await agent.post("/api/auth/login").send({ email, password: "password123" });
   return agent;
+}
+
+/**
+ * Waits until `expected` other sessions of the test database are blocked on a lock, so a test can be sure
+ * every concurrent request has reached the point it wants to hold them at before releasing them.
+ */
+async function waitForLockWaiters(observer: Client, expected: number, timeoutMs = 5000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    // Inside a transaction Postgres keeps serving the same statistics snapshot; drop it so each poll is fresh.
+    await observer.query("SELECT pg_stat_clear_snapshot()");
+    const { rows } = await observer.query<{ waiting: number }>(
+      `SELECT count(*)::int AS waiting FROM pg_stat_activity
+       WHERE datname = current_database() AND wait_event_type = 'Lock' AND pid <> pg_backend_pid()`,
+    );
+    if (rows[0]!.waiting >= expected) return;
+    if (Date.now() > deadline) throw new Error(`only ${rows[0]!.waiting} of ${expected} sessions reached the lock`);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
 }
 
 /** Inserts `count` active keywords named `<prefix> 1..count` for the user. */
@@ -120,15 +141,56 @@ describe("active keyword cap", () => {
   test("concurrent creations cannot slip past the cap", async () => {
     const user = await createTestUser({ email: "cap-race@example.com" });
     await seedActive(user.id, MAX - 1);
-    const agent = await loginAgent("cap-race@example.com");
+    // The requests go through Node's own fetch against one listening server. Supertest is not used here: with a
+    // bare app it starts (and closes) a separate ephemeral server per request, and dozens at once make Linux reuse
+    // freed ports so a pooled socket hits a closed server (ECONNRESET); through one agent it sends them one by
+    // one, which never exercises the race at all.
+    const server = app.listen(0);
+    await new Promise<void>((resolve) => server.once("listening", () => resolve()));
+    const { port } = server.address() as AddressInfo;
+    const base = `http://127.0.0.1:${port}`;
+    const login = await fetch(`${base}/api/auth/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "cap-race@example.com", password: "password123" }),
+    });
+    const cookie = login.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
 
-    // Many simultaneous requests, not a handful: with few, the transactions can happen to run one
-    // after another and the test would pass even without the row lock.
+    // A separate session holds a SHARE lock on `keywords`: every request can still read the count, but its
+    // INSERT blocks. That parks all of them inside the check-then-insert window at the same time, so without
+    // the user-row lock in withKeywordCapacity they would all see room and overshoot the cap — on any
+    // machine, instead of only when the scheduler happens to interleave them.
+    const blocker = new Client({ connectionString: process.env.DATABASE_URL });
+    await blocker.connect();
     const terms = Array.from({ length: 25 }, (_, i) => `race ${i}`);
-    const responses = await Promise.all(terms.map((term) => agent.post("/api/keywords").send({ term })));
+    let statuses: number[];
+    try {
+      await blocker.query("BEGIN");
+      await blocker.query("LOCK TABLE keywords IN SHARE MODE");
+      const pending = Promise.all(
+        terms.map((term) =>
+          fetch(`${base}/api/keywords`, {
+            method: "POST",
+            headers: { "content-type": "application/json", cookie },
+            body: JSON.stringify({ term }),
+          }).then(async (res) => {
+            await res.arrayBuffer();
+            return res.status;
+          }),
+        ),
+      );
+      // Every pooled connection ends up waiting on a lock: on the blocked INSERT, or behind the user-row lock.
+      await waitForLockWaiters(blocker, Math.min(pool.options.max ?? 10, terms.length));
+      await blocker.query("COMMIT");
+      statuses = await pending;
+    } finally {
+      await blocker.query("ROLLBACK").catch(() => undefined);
+      await blocker.end();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
 
-    const created = responses.filter((r) => r.status === 201).length;
-    const rejected = responses.filter((r) => r.status === 422).length;
+    const created = statuses.filter((status) => status === 201).length;
+    const rejected = statuses.filter((status) => status === 422).length;
     expect(created).toBe(1);
     expect(rejected).toBe(terms.length - 1);
 
