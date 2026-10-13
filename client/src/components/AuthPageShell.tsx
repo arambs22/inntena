@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 import { GridBackground } from "./GridBackground";
 import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
@@ -17,6 +19,7 @@ interface AuthPageShellProps {
  * The animated background lives inside the form column so it never crosses into the panel.
  */
 export function AuthPageShell({ children }: AuthPageShellProps) {
+  const { t } = useLanguage();
   return (
     <div className="flex min-h-screen bg-bg">
       <div className="relative flex min-h-screen min-w-0 flex-1 flex-col items-center justify-center gap-8 overflow-hidden px-4 py-12">
@@ -29,6 +32,10 @@ export function AuthPageShell({ children }: AuthPageShellProps) {
           <HeroWordmark />
         </div>
         {children}
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4 text-xs text-text-muted">
+          <Link to="/terms" className="underline hover:text-text">{t.footer.terms}</Link>
+          <Link to="/privacy" className="underline hover:text-text">{t.footer.privacy}</Link>
+        </div>
       </div>
       <AuthScenePanel />
     </div>

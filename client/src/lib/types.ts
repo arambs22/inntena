@@ -3,6 +3,7 @@ export interface User {
   email: string;
   historyRetentionDays: number;
   emailVerified: boolean;
+  termsAccepted: boolean;
 }
 
 export interface KeywordRegionStatus {
@@ -70,4 +71,26 @@ export interface KeywordHistoryRelated {
   term: string;
   category: string;
   columns: { region: string; rising: RelatedQuery[] }[];
+}
+
+export type SupplyStatus = "fresh" | "refreshing" | "unavailable";
+
+/** One keyword's Etsy supply reading, as returned by GET /api/supply. `count` is null when unknown or too old to show. */
+export interface SupplyItem {
+  keywordId: number;
+  count: number | null;
+  fetchedAt: string | null;
+  status: SupplyStatus;
+}
+
+export interface SupplyResponse {
+  enabled: boolean;
+  items: SupplyItem[];
+}
+
+/** Instance settings the client needs before login, from GET /api/public-config. */
+export interface PublicConfig {
+  supportEmail: string | null;
+  operatorName: string | null;
+  termsVersion: string;
 }

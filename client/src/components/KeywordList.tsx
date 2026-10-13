@@ -3,6 +3,10 @@ import { api } from "../lib/api";
 import { useLanguage } from "../context/LanguageContext";
 import { regionLabel } from "../lib/i18n";
 import type { Keyword } from "../lib/types";
+import { VerdictBadge } from "./VerdictBadge";
+import { formatCount } from "../lib/opportunity";
+import { growthLocale } from "../lib/growth";
+import type { KeywordInsight } from "../lib/keywordInsights";
 
 interface KeywordListProps {
   keywords: Keyword[];
@@ -12,6 +16,8 @@ interface KeywordListProps {
   onSelect: (id: number) => void;
   /** Active search query; used only to tell "no keywords at all" apart from "no keyword matches". */
   query?: string;
+  /** Opportunity insight per keyword id; absent when Etsy data is disabled. */
+  insights?: Map<number, KeywordInsight>;
 }
 
 function getBlockedRegions(keyword: Keyword, activeRegions: string[]): string[] {
@@ -97,8 +103,13 @@ function BlockedIndicator({ keyword, blockedRegions }: BlockedIndicatorProps) {
 }
 
 /** Lists the user's tracked keywords; click to select, pin, pause/resume automatic collection, or archive individually. */
-export function KeywordList({ keywords, activeRegions, onChanged, selectedId, onSelect, query = "" }: KeywordListProps) {
-  const { t } = useLanguage();
+export function KeywordList({ keywords, activeRegions, onChanged, selectedId, onSelect, query = "", insights }: KeywordListProps) {
+  const { t, language } = useLanguage();
+
+  function supplyText(keywordId: number): string | null {
+    const count = insights?.get(keywordId)?.supply?.count;
+    return count === undefined || count === null ? null : t.supply.listings(formatCount(count, growthLocale(language)));
+  }
 
   async function handleTogglePin(id: number, currentlyPinned: boolean) {
     await api.patch(`/keywords/${id}/pin`, { pinned: !currentlyPinned });
@@ -149,7 +160,15 @@ export function KeywordList({ keywords, activeRegions, onChanged, selectedId, on
                 <p className="truncate text-sm font-medium text-text" title={keyword.term}>
                   {keyword.term}
                 </p>
-                <p className="text-xs text-text-muted">{keyword.category}</p>
+                <p className="text-xs text-text-muted">
+                  {keyword.category}
+                  {supplyText(keyword.id) && <> · {supplyText(keyword.id)}</>}
+                </p>
+                {insights?.get(keyword.id)?.verdict && (
+                  <div className="mt-1">
+                    <VerdictBadge verdict={insights.get(keyword.id)!.verdict!} />
+                  </div>
+                )}
               </div>
               {blockedRegions.length > 0 && <BlockedIndicator keyword={keyword} blockedRegions={blockedRegions} />}
             </div>
