@@ -75,6 +75,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
         {changeSuccess && <p className="rounded border border-border bg-bg p-2 text-xs text-text">{t.account.changePassword.success}</p>}
         <input
           type="password"
+          autoComplete="current-password"
           required
           placeholder={t.account.changePassword.current}
           value={currentPassword}
@@ -83,6 +84,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
         />
         <input
           type="password"
+          autoComplete="new-password"
           required
           minLength={8}
           placeholder={t.account.changePassword.new}
@@ -92,6 +94,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
         />
         <input
           type="password"
+          autoComplete="new-password"
           required
           minLength={8}
           placeholder={t.account.changePassword.confirm}
@@ -114,6 +117,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
         {deleteError && <FormError message={deleteError} size="xs" />}
         <input
           type="password"
+          autoComplete="current-password"
           required
           placeholder={t.account.deleteAccount.password}
           value={deletePassword}

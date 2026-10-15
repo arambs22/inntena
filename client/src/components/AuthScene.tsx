@@ -4,10 +4,10 @@ import { BASE_RADIUS, PILLARS, pillarPosition, type Pillar } from "../lib/pillar
 import { createRandom } from "../lib/random";
 
 /**
- * Brand red of the design reference. Constant on purpose: the scene lives on a panel that is
+ * Brand terracotta accent. Constant on purpose: the scene lives on a panel that is
  * dark in both themes, so it must not pick up the darker light-theme `primary` token.
  */
-const BRAND_RED = 0xf23843;
+const BRAND_ACCENT = 0xd9825a;
 const OFF_WHITE = 0xfbeded;
 
 const SPHERE_RADIUS = 0.55;
@@ -55,10 +55,10 @@ function createRingTexture(): THREE.CanvasTexture {
   canvas.height = size;
   const context = canvas.getContext("2d")!;
   const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, "rgba(242,56,67,0)");
-  gradient.addColorStop(0.72, "rgba(242,56,67,0)");
-  gradient.addColorStop(0.86, "rgba(242,56,67,0.9)");
-  gradient.addColorStop(1, "rgba(242,56,67,0)");
+  gradient.addColorStop(0, "rgba(217,130,90,0)");
+  gradient.addColorStop(0.72, "rgba(217,130,90,0)");
+  gradient.addColorStop(0.86, "rgba(217,130,90,0.9)");
+  gradient.addColorStop(1, "rgba(217,130,90,0)");
   context.fillStyle = gradient;
   context.fillRect(0, 0, size, size);
   const texture = new THREE.CanvasTexture(canvas);
@@ -179,7 +179,7 @@ function disposeScene(scene: THREE.Scene): void {
 
 /**
  * The login panel's animated landscape: a group of monoliths slowly turning on a circular
- * base under a red sphere that pulses like the wordmark's dot, in a field of stars. Drawn
+ * base under a terracotta sphere that pulses like the wordmark's dot, in a field of stars. Drawn
  * with plain three.js (no React renderer) to keep the dependency surface small and the
  * lifecycle explicit. Honors `prefers-reduced-motion` by drawing a single still frame, and
  * renders nothing at all if WebGL is unavailable, leaving the caller's static fallback visible.
@@ -209,7 +209,7 @@ export default function AuthScene({ onReady }: AuthSceneProps) {
     scene.fog = new THREE.FogExp2(0x141110, 0.028);
     const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 200);
 
-    const glowTexture = createGlowTexture("242,56,67");
+    const glowTexture = createGlowTexture("217,130,90");
     const starTexture = createGlowTexture("255,255,255");
     const ringTexture = createRingTexture();
 
@@ -221,7 +221,7 @@ export default function AuthScene({ onReady }: AuthSceneProps) {
 
     const sphere = new THREE.Mesh(
       new THREE.SphereGeometry(SPHERE_RADIUS, 48, 32),
-      new THREE.MeshStandardMaterial({ color: 0x8a121c, emissive: BRAND_RED, emissiveIntensity: 0.85, roughness: 0.3, metalness: 0, fog: false })
+      new THREE.MeshStandardMaterial({ color: 0x6e3520, emissive: BRAND_ACCENT, emissiveIntensity: 0.85, roughness: 0.3, metalness: 0, fog: false })
     );
     const glow = new THREE.Sprite(
       new THREE.SpriteMaterial({ map: glowTexture, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, transparent: true })
@@ -229,7 +229,7 @@ export default function AuthScene({ onReady }: AuthSceneProps) {
     const ping = new THREE.Sprite(
       new THREE.SpriteMaterial({ map: ringTexture, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, transparent: true })
     );
-    const sphereLight = new THREE.PointLight(BRAND_RED, 38, 16, 2);
+    const sphereLight = new THREE.PointLight(BRAND_ACCENT, 38, 16, 2);
     scene.add(sphere, glow, ping, sphereLight);
 
     const smallStars = buildStars(320, 0.55, 23, starTexture);

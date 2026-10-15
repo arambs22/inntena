@@ -63,7 +63,7 @@ export function buildTerms(language: Language, { operator, contact }: LegalConte
         {
           heading: "4. Fuentes de datos y precisión",
           paragraphs: [
-            "Los datos de tendencia vienen de Google Trends y los de oferta de Etsy. Ambos pueden tener retraso, estar incompletos o ser imprecisos; el conteo de Etsy se basa en su búsqueda y puede incluir listings que no tienen que ver, aunque elijas una categoría. Los ejemplos de listings se muestran tal como los devuelve Etsy y pueden cambiar o desaparecer. Las sugerencias de \"Descubrir\" son búsquedas en alza y fechas de temporada, no ventas comprobadas. Los veredictos que se muestran (como \"Oportunidad\") son guías aproximadas, no asesoría; tú decides qué crear y vender, bajo tu propio riesgo.",
+            "Los datos de tendencia vienen de Google Trends y los de oferta de Etsy. Ambos pueden tener retraso, estar incompletos o ser imprecisos; el conteo de Etsy se basa en su búsqueda y puede incluir listings que no tienen que ver, aunque elijas una categoría. Los ejemplos de listings se muestran tal como los devuelve Etsy y pueden cambiar o desaparecer. Las sugerencias de \"Descubrir\" salen de búsquedas en alza en Google Shopping, un calendario de temporadas y una lista curada de nichos de producto digital; Etsy se usa solo para filtrar por conteo de listings. Son ideas, no ventas comprobadas. Los veredictos que se muestran (como \"Oportunidad\") son guías aproximadas, no asesoría; tú decides qué crear y vender, bajo tu propio riesgo.",
           ],
         },
         {
@@ -118,7 +118,7 @@ export function buildTerms(language: Language, { operator, contact }: LegalConte
       {
         heading: "4. Data sources and accuracy",
         paragraphs: [
-          "Trend data comes from Google Trends and supply data from Etsy. Both can be delayed, incomplete or inaccurate; Etsy counts come from its search and may include unrelated listings, even when you choose a category. Listing examples are shown as Etsy returns them and may change or disappear. \"Discover\" suggestions are rising searches and seasonal dates, not proven sales. The verdicts shown (such as \"Opportunity\") are rough guides, not advice; you decide what to make and sell, at your own risk.",
+          "Trend data comes from Google Trends and supply data from Etsy. Both can be delayed, incomplete or inaccurate; Etsy counts come from its search and may include unrelated listings, even when you choose a category. Listing examples are shown as Etsy returns them and may change or disappear. \"Discover\" suggestions come from rising Google Shopping searches, a season calendar and a curated list of digital-product niches; Etsy is used only to filter by listing count. They are ideas, not proven sales. The verdicts shown (such as \"Opportunity\") are rough guides, not advice; you decide what to make and sell, at your own risk.",
         ],
       },
       {

@@ -29,12 +29,25 @@ export function discoverNeedsRefetch(suggestions: DiscoverSuggestion[], now: num
   return Number.isFinite(oldest) && now - oldest >= SUPPLY_REFETCH_AGE_MS;
 }
 
+/** What the Discover hook exposes: the visible suggestions and whether the server is still verifying more. */
+export interface DiscoverState {
+  suggestions: DiscoverSuggestion[];
+  checking: boolean;
+}
+
+/** Whether a response warrants another poll: the server is still checking terms, or some count is being fetched. */
+export function discoverNeedsPoll(res: DiscoverResponse): boolean {
+  return res.checking || res.suggestions.some((s) => s.supply?.status === "refreshing");
+}
+
 /**
  * Discover suggestions for the demand region; reloads when the region or the keyword list changes. A 5-minute timer
- * re-applies the 24 h display cutoff and refetches once the oldest count is 12 h old. Silent on failure.
+ * re-applies the 24 h display cutoff and refetches once the oldest count is 12 h old. While the server reports
+ * `checking`, it keeps polling on the shared schedule. Silent on failure.
  */
-export function useDiscover(region: string | undefined, signature: string): DiscoverSuggestion[] | null {
-  const [suggestions, setSuggestions] = useState<DiscoverSuggestion[] | null>(null);
+export function useDiscover(region: string | undefined, signature: string): DiscoverState | null {
+  const [response, setResponse] = useState<DiscoverResponse | null>(null);
+  const suggestions = response?.suggestions ?? null;
   const [now, setNow] = useState(() => Date.now());
   const reloadRef = useRef<() => void>(() => {});
   const suggestionsRef = useRef<DiscoverSuggestion[] | null>(null);
@@ -57,10 +70,8 @@ export function useDiscover(region: string | undefined, signature: string): Disc
         .get<DiscoverResponse>(`/discover?region=${encodeURIComponent(region ?? "")}`)
         .then((res) => {
           if (cancelled) return;
-          setSuggestions(res.suggestions);
-          // Crowded terms can only be filtered once their count arrives, so keep asking while any is being fetched.
-          const refreshing = res.suggestions.some((s) => s.supply?.status === "refreshing");
-          const delay = refreshing ? nextPollDelay(pollsDone) : null;
+          setResponse(res);
+          const delay = discoverNeedsPoll(res) ? nextPollDelay(pollsDone) : null;
           if (delay !== null) timer = setTimeout(() => load(pollsDone + 1), delay);
         })
         .catch(() => {});
@@ -77,5 +88,8 @@ export function useDiscover(region: string | undefined, signature: string): Disc
     };
   }, [region, signature]);
 
-  return useMemo(() => (suggestions ? applyDiscoverCutoff(suggestions, now) : null), [suggestions, now]);
+  return useMemo(
+    () => (response ? { suggestions: applyDiscoverCutoff(response.suggestions, now), checking: response.checking } : null),
+    [response, now],
+  );
 }

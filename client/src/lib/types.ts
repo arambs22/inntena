@@ -127,9 +127,14 @@ export interface ListingSamplesResponse {
 
 export type SeasonEvent = "valentines" | "mothersDay" | "backToSchool" | "halloween" | "dayOfTheDead" | "christmas" | "weddings";
 
+/** Curated digital-product niche families a catalog suggestion can belong to. */
+export type CatalogFamily = "clipart" | "svg" | "wallArt" | "planner" | "party" | "sticker" | "pattern" | "wedding" | "kids" | "coloring" | "template";
+
+/** Why a term is suggested. `growth` is the raw Google value: "Breakout" or a numeric string such as "4400". */
 export type DiscoverOrigin =
-  | { type: "related"; from: string; breakout: boolean }
-  | { type: "season"; event: SeasonEvent; daysUntil: number };
+  | { type: "shopping"; seed: string; growth: string }
+  | { type: "season"; event: SeasonEvent; daysUntil: number }
+  | { type: "catalog"; family: CatalogFamily };
 
 export interface DiscoverSuggestion {
   term: string;
@@ -140,4 +145,6 @@ export interface DiscoverSuggestion {
 
 export interface DiscoverResponse {
   suggestions: DiscoverSuggestion[];
+  /** True while the server is still verifying more terms against Etsy. */
+  checking: boolean;
 }

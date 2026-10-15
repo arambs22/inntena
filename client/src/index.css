@@ -3,23 +3,23 @@
 @tailwind utilities;
 
 /*
- * Color tokens. The red is split in two on purpose: `primary` is the accent for
- * text, borders and tints (tuned to reach WCAG AA as small text on `bg`/`surface`),
- * while `primary-solid` is the fill behind `on-primary` text on buttons (tuned for
- * white-on-red contrast). The brand red of the design reference (#f23843) reaches
- * neither on its own, so a single token could not serve both roles.
+ * Color tokens. The terracotta accent is split in two on purpose: `primary` is the
+ * accent for text, borders and tints (WCAG AA as small text on `bg`/`surface`), while
+ * `primary-solid` is the fill behind `on-primary` text on buttons. In the dark theme the
+ * fill is light enough that dark `on-primary` text reads better than white (5.07:1 vs
+ * 3.37:1); the light theme keeps white text on a deeper fill (4.56:1).
  */
 :root {
   --color-bg: #f6ecec;
   --color-surface: #fffafa;
   --color-text: #241f1f;
   --color-text-muted: #6b5e5d;
-  --color-primary: #c8252f;
-  --color-primary-solid: #c8252f;
-  --color-primary-solid-hover: #b81f2c;
+  --color-primary: #a24f2a;
+  --color-primary-solid: #b65d34;
+  --color-primary-solid-hover: #a3512c;
   --color-on-primary: #ffffff;
   /*
-   * Soft red tint and hairline, derived from `primary`. Tailwind 3 cannot apply opacity
+   * Soft accent tint and hairline, derived from `primary`. Tailwind 3 cannot apply opacity
    * modifiers (`bg-primary/10`) to colors defined as `var(--x)` and drops such classes
    * silently, so the translucent variants are tokens of their own. Defined once on :root,
    * they resolve against the active theme's `primary` because `.dark` sits on the same element.
@@ -41,10 +41,10 @@
   --color-surface: #2a2423;
   --color-text: #fbeded;
   --color-text-muted: #b9a9a8;
-  --color-primary: #ff5560;
-  --color-primary-solid: #dc2b37;
-  --color-primary-solid-hover: #cc2834;
-  --color-on-primary: #ffffff;
+  --color-primary: #e39470;
+  --color-primary-solid: #c9774f;
+  --color-primary-solid-hover: #d68a62;
+  --color-on-primary: #1f1b1a;
   --color-border: #3d3433;
   --color-rise: #8fb08a;
   --color-series-2: #fbeded;

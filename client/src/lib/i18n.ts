@@ -242,11 +242,15 @@ export interface Translations {
     empty: string;
     track: string;
     tracking: string;
-    fromRelated: (term: string) => string;
-    breakout: string;
+    shoppingRising: (growth: string) => string;
+    shoppingBreakout: string;
+    catalogLabel: (family: string) => string;
+    families: Record<"clipart" | "svg" | "wallArt" | "planner" | "party" | "sticker" | "pattern" | "wedding" | "kids" | "coloring" | "template", string>;
+    moreIdeas: string;
+    lookingForMore: string;
+    listingsOnEtsy: (count: string) => string;
     season: (event: string, days: number) => string;
     events: Record<"valentines" | "mothersDay" | "backToSchool" | "halloween" | "dayOfTheDead" | "christmas" | "weddings", string>;
-    supplyUnknown: string;
   };
   regions: Record<string, string>;
 }
@@ -584,14 +588,31 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     },
     discover: {
       title: "Descubrir",
-      caveat: "Búsquedas en alza y fechas de temporada, filtradas por saturación en Etsy. No son ventas comprobadas.",
+      caveat: "Búsquedas en alza en Google Shopping, próximas temporadas y una lista curada de nichos de producto digital, filtradas a términos que ya se venden en Etsy pero no están saturados. No son ventas comprobadas.",
       show: "Mostrar",
       hide: "Ocultar",
-      empty: "Aún no hay sugerencias. Aparecen después de la próxima recolección de tendencias.",
+      empty: "No encontramos sugerencias por ahora. Vuelve a intentar más tarde.",
       track: "Seguir",
       tracking: "Agregando...",
-      fromRelated: (term) => `Sube junto a "${term}"`,
-      breakout: "Breakout",
+      shoppingRising: (growth) => `En alza en Google Shopping (${growth})`,
+      shoppingBreakout: "En alza en Google Shopping (Breakout)",
+      catalogLabel: (family) => `Nicho de producto digital · ${family}`,
+      families: {
+        clipart: "Clip art",
+        svg: "Archivos SVG",
+        wallArt: "Arte para pared",
+        planner: "Planificadores",
+        party: "Fiestas",
+        sticker: "Stickers",
+        pattern: "Patrones",
+        wedding: "Bodas",
+        kids: "Infantil",
+        coloring: "Para colorear",
+        template: "Plantillas",
+      },
+      moreIdeas: "Otras ideas",
+      lookingForMore: "Buscando más ideas…",
+      listingsOnEtsy: (count) => `${count} listings en Etsy`,
       season: (event, days) => (days === 0 ? `Temporada: ${event} (ya)` : `Temporada: ${event} en ${days} días`),
       events: {
         valentines: "San Valentín",
@@ -602,7 +623,6 @@ export const TRANSLATIONS: Record<Language, Translations> = {
         christmas: "Navidad",
         weddings: "Temporada de bodas",
       },
-      supplyUnknown: "Oferta sin consultar",
     },
     regions: REGION_NAMES_ES,
   },
@@ -870,14 +890,31 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     },
     discover: {
       title: "Discover",
-      caveat: "Rising searches and seasonal dates, filtered by Etsy saturation. These are not proven sales.",
+      caveat: "Rising Google Shopping searches, upcoming seasons and a curated list of digital-product niches, filtered to terms that already sell on Etsy but are not saturated. These are not proven sales.",
       show: "Show",
       hide: "Hide",
-      empty: "No suggestions yet. They appear after the next trend collection.",
+      empty: "No suggestions found right now. Try again later.",
       track: "Track",
       tracking: "Adding...",
-      fromRelated: (term) => `Rising with "${term}"`,
-      breakout: "Breakout",
+      shoppingRising: (growth) => `Rising in Google Shopping (${growth})`,
+      shoppingBreakout: "Rising in Google Shopping (Breakout)",
+      catalogLabel: (family) => `Digital product niche · ${family}`,
+      families: {
+        clipart: "Clip art",
+        svg: "SVG files",
+        wallArt: "Wall art",
+        planner: "Planners",
+        party: "Party",
+        sticker: "Stickers",
+        pattern: "Patterns",
+        wedding: "Wedding",
+        kids: "Kids",
+        coloring: "Coloring",
+        template: "Templates",
+      },
+      moreIdeas: "More ideas",
+      lookingForMore: "Looking for more ideas…",
+      listingsOnEtsy: (count) => `${count} listings on Etsy`,
       season: (event, days) => (days === 0 ? `Season: ${event} (now)` : `Season: ${event} in ${days} days`),
       events: {
         valentines: "Valentine's Day",
@@ -888,7 +925,6 @@ export const TRANSLATIONS: Record<Language, Translations> = {
         christmas: "Christmas",
         weddings: "Wedding season",
       },
-      supplyUnknown: "Supply not checked",
     },
     regions: REGION_NAMES_EN,
   },

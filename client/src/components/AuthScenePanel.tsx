@@ -58,7 +58,7 @@ export function AuthScenePanel() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 70% 38% at 50% 27%, rgba(242,56,67,0.13), transparent 70%), linear-gradient(to top, rgba(242,56,67,0.09), transparent 42%)",
+              "radial-gradient(ellipse 70% 38% at 50% 27%, rgba(217,130,90,0.13), transparent 70%), linear-gradient(to top, rgba(217,130,90,0.09), transparent 42%)",
           }}
         />
         <SceneFallback retired={sceneReady} />

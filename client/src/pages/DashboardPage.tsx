@@ -76,7 +76,7 @@ export function DashboardPage() {
   const { enabled: etsyEnabled, items: supplyItems } = useSupply(supplySignature, demandRegion);
   const selectedKeyword = keywords.find((k) => k.id === selectedId) ?? null;
   const listings = useEtsyListings(selectedId, String(selectedKeyword?.etsyTaxonomyId ?? 0));
-  const suggestions = useDiscover(demandRegion, keywords.map((keyword) => keyword.id).join(","));
+  const discover = useDiscover(demandRegion, keywords.map((keyword) => keyword.id).join(","));
   const hydratedRegions = useRef(false);
 
   function handleRangeChange(next: ChartRange) {
@@ -265,7 +265,7 @@ export function DashboardPage() {
           onRemove={handleRemoveRegion}
           onAdd={handleAddRegion}
         />
-        {suggestions !== null && <DiscoverStrip suggestions={suggestions} onTracked={() => refetchKeywords()} />}
+        {discover !== null && <DiscoverStrip suggestions={discover.suggestions} checking={discover.checking} onTracked={() => refetchKeywords()} />}
         <div className="grid items-start gap-6 md:grid-cols-[320px_1fr]">
           {/* Sticky, viewport-tall column: a long keyword list scrolls inside it while the page scrolls on the right. */}
           <div className="flex min-h-0 flex-col gap-4 md:sticky md:top-4 md:max-h-[calc(100vh-2rem)]">
@@ -325,16 +325,18 @@ export function DashboardPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <h1 className="truncate font-display text-xl font-semibold text-text">{selectedKeyword?.term}</h1>
-                      <p className="text-xs text-text-muted">
-                        {selectedKeyword && selectedKeyword.regions.length > 0
-                          ? t.dashboard.dataAvailableIn(selectedKeyword.regions.map((code) => regionLabel(t, code)).join(", "))
-                          : t.dashboard.noDataYet}
-                      </p>
+                      {selectedKeyword && selectedKeyword.regions.length > 0 && (
+                        <p className="text-xs text-text-muted">
+                          {t.dashboard.dataAvailableIn(selectedKeyword.regions.map((code) => regionLabel(t, code)).join(", "))}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-text-muted">{t.dashboard.showingDays(countChartDays(visibleSeries))}</span>
-                      <ChartRangeSelector value={range} onChange={handleRangeChange} />
-                    </div>
+                    {countChartDays(visibleSeries) > 0 && (
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-text-muted">{t.dashboard.showingDays(countChartDays(visibleSeries))}</span>
+                        <ChartRangeSelector value={range} onChange={handleRangeChange} />
+                      </div>
+                    )}
                   </div>
                   {selectedInsight && demandRegion !== undefined && (
                     <div className="mt-4">
