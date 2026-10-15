@@ -12,7 +12,7 @@ const COLORS = {
   surface: "#fffafa",
   text: "#241f1f",
   textMuted: "#6b5e5d",
-  primary: "#c8252f",
+  primary: "#b65d34",
 };
 
 /**

@@ -50,6 +50,13 @@
       "when": 1791953494244,
       "tag": "0006_colorful_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792053168503,
+      "tag": "0007_serious_blob",
+      "breakpoints": true
     }
   ]
 }

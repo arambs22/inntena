@@ -56,6 +56,8 @@ describe("GET /api/discover", () => {
     await etsySupplyService.onIdle();
 
     expect(res.status).toBe(200);
+    expect(Object.keys(res.body).sort()).toEqual(["checking", "suggestions"]);
+    expect(res.body.checking).toBe(false);
     expect(res.body.suggestions.length).toBeGreaterThan(0);
     expect(res.body.suggestions.every((s: { supply: unknown }) => s.supply === null)).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();

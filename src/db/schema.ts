@@ -157,3 +157,15 @@ export const etsyListingSamples = pgTable("etsy_listing_samples", {
   payload: jsonb("payload").$type<ListingSampleRow[]>().notNull(),
   fetchedAt: timestamp("fetched_at").notNull(),
 });
+
+/**
+ * Rising Google Shopping searches around the Discover hub seeds, collected once a day for the whole instance (not per
+ * user). Only the latest successful run per seed is kept. Google data, never Etsy content.
+ */
+export const discoverRising = pgTable("discover_rising", {
+  id: serial("id").primaryKey(),
+  seed: text("seed").notNull(),
+  query: text("query").notNull(),
+  growthValue: text("growth_value").notNull(),
+  collectedAt: timestamp("collected_at").defaultNow().notNull(),
+});

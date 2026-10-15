@@ -1,6 +1,6 @@
 import { db } from "../db/client.js";
 import { keywords, trendSnapshots, relatedQueries, keywordCollectionStatus, userRegions } from "../db/schema.js";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import {
   fetchInterestOverTime,
   fetchRelatedQueries,
@@ -8,18 +8,12 @@ import {
 } from "./googleTrends.service.js";
 import { getTodayLocal } from "../utils/date.js";
 import { logger } from "../utils/logger.js";
+import { collectShoppingRising } from "./shoppingRising.service.js";
+import { MAX_CONSECUTIVE_FAILURES, randomDelay } from "./collectionPacing.js";
 
-const BASE_DELAY_MS = 8000;
-const JITTER_MS = 3000;
 const SKIP_DELAY_MS = 700;
 
-/**
- * Consecutive failed keywords after which a run gives up, both within a
- * region and (via the flag on RegionCollectionResult) across regions.
- * Also the threshold at which the dashboard reports a keyword as blocked —
- * imported by keywords.route.ts so the two can't drift apart.
- */
-export const MAX_CONSECUTIVE_FAILURES = 3;
+export { MAX_CONSECUTIVE_FAILURES };
 
 type CollectionStatus = "skipped" | "success" | "failed";
 
@@ -34,10 +28,6 @@ export interface RegionCollectionResult {
 interface KeywordRow {
   id: number;
   term: string;
-}
-
-function randomDelay(): number {
-  return BASE_DELAY_MS + Math.floor(Math.random() * JITTER_MS);
 }
 
 /** Every actively tracked (non-archived, not paused) keyword across all users. */
@@ -125,7 +115,10 @@ async function collectForKeyword(keywordId: number, term: string, geo: string): 
       await db
         .insert(trendSnapshots)
         .values(timeline.map((point) => ({ keywordId, geo, date: point.date, value: point.value })))
-        .onConflictDoNothing();
+        .onConflictDoUpdate({
+          target: [trendSnapshots.keywordId, trendSnapshots.geo, trendSnapshots.date],
+          set: { value: sql`excluded.value` },
+        });
     }
 
     await sleep(randomDelay());
@@ -221,6 +214,12 @@ export async function collectTrendsForAllRegions(): Promise<void> {
       );
       return;
     }
+  }
+
+  try {
+    await collectShoppingRising();
+  } catch (err) {
+    logger.error("Shopping rising step failed", { error: err instanceof Error ? err.message : String(err) });
   }
 }
 

@@ -21,6 +21,9 @@ const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
  * depend on whichever keywords it happened to be grouped with. Requesting one
  * term at a time keeps every stored value self-normalized and comparable
  * across days. Do not batch this.
+ *
+ * Partial points (the still-incomplete most recent period) are dropped: their
+ * value is artificially low and would otherwise be stored permanently.
  */
 export async function fetchInterestOverTime(
   keyword: string,
@@ -35,21 +38,28 @@ export async function fetchInterestOverTime(
   const parsed = JSON.parse(raw);
   const timelineData = parsed.default?.timelineData ?? [];
 
-  return timelineData.map((point: any) => ({
-    date: new Date(Number(point.time) * 1000).toISOString().slice(0, 10),
-    value: point.value[0],
-  }));
+  return timelineData
+    .filter((point: any) => !point.isPartial)
+    .map((point: any) => ({
+      date: new Date(Number(point.time) * 1000).toISOString().slice(0, 10),
+      value: point.value[0],
+    }));
 }
 
-/** Fetches rising related queries for a keyword over the last 90 days. */
+/**
+ * Fetches rising related queries for a keyword over the last 90 days.
+ * When `property` is "froogle" the queries come from Google Shopping search.
+ */
 export async function fetchRelatedQueries(
   keyword: string,
-  geo: string = ""
+  geo: string = "",
+  property?: "froogle"
 ): Promise<RelatedQueryResult[]> {
   const raw = await googleTrends.relatedQueries({
     keyword,
     startTime: new Date(Date.now() - NINETY_DAYS_MS),
     geo,
+    ...(property ? { property } : {}),
   });
 
   const parsed = JSON.parse(raw);
