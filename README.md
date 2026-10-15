@@ -1,217 +1,289 @@
-# Inntena
+<div align="center">
 
-![Status](https://img.shields.io/badge/status-live-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.png">
+  <img alt="inntena" src=".github/assets/logo-light.png" width="300">
+</picture>
 
-**Live demo:** [niche-radar.onrender.com](https://niche-radar.onrender.com)
+### Spot the next Etsy trend before everyone else is selling it.
 
-A free, open-source tool to detect design and aesthetic trends **before they
-saturate** marketplaces like Etsy — built for creators of clip art and
-AI-generated digital assets.
+Inntena tracks what people are starting to search for, checks how many sellers already offer it on Etsy,<br>
+and tells you which niches are still open — free, open source, and self-hostable.
 
-## Why
+<br>
 
-Tools like eRank or Alura solve this problem, but they're paid and 
-closed source. Inntena offers the essentials: Google Trends search 
-volume tracking and rising related searches, multi region comparison, and
-a history of everything you've tracked, for free, transparently, and easy
-to self host.
+[**Try the live demo →**](https://niche-radar.onrender.com)
 
-## Features
+<br>
 
-- **Multi-user accounts** — email/password auth (JWT in an httpOnly cookie),
-  each user tracks their own independent set of keywords.
-- **Trend dashboard** — search volume history and rising related queries per
-  keyword, powered by Recharts, with side-by-side comparison across up to 3
-  regions at once (plus Worldwide).
-- **Keyword history** — archived keywords keep their collected data for a
-  configurable retention period (15/30/60/90 days) instead of being deleted
-  outright, and can be restored.
-- **Automatic daily collection** — a scheduled job (GitHub Actions → a
-  protected internal endpoint) pulls fresh Google Trends data every day,
-  with built-in rate-limit backoff and a circuit breaker so it degrades
-  gracefully instead of getting the server blocked by Google.
-- **Etsy supply and opportunity verdict (optional)** — with an Etsy API key
-  configured, each keyword also shows how many active Etsy listings match
-  it, and a verdict (Opportunity, Promising, Steady, Crowded, Cooling) that
-  combines that supply with the Google Trends demand momentum.
-- **English/Spanish UI**, light/dark theme, both persisted per browser.
+[![CI](https://github.com/arambs22/inntena/actions/workflows/ci.yml/badge.svg)](https://github.com/arambs22/inntena/actions/workflows/ci.yml)
+![Status](https://img.shields.io/badge/status-actively%20developed-c9774f)
+[![License: MIT](https://img.shields.io/badge/license-MIT-b65d34)](./LICENSE)
+![PRs welcome](https://img.shields.io/badge/PRs-welcome-8fb08a)
+<br>
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![React 19](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB)
+![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Drizzle](https://img.shields.io/badge/Drizzle_ORM-C5F74F?logo=drizzle&logoColor=black)
+![Three.js](https://img.shields.io/badge/Three.js-000000?logo=threedotjs&logoColor=white)
 
-## Tech Stack
+<br>
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 19 + Vite + TypeScript + Tailwind CSS, React Router, Recharts |
-| Backend | TypeScript + Express |
-| Auth | bcrypt + JWT in an httpOnly cookie |
-| Database | PostgreSQL (Docker Compose locally, [Neon](https://neon.tech) in production) |
-| ORM | Drizzle ORM + drizzle-kit |
-| Trend data | `google-trends-api` (unofficial, no API key required) |
-| Security | Helmet (with an explicit CSP), `express-rate-limit` |
-| Deploy | Render (`render.yaml` Blueprint — web service only; the database lives on Neon) |
-| Scheduling | GitHub Actions (daily cron, triggers a protected collection endpoint) |
-| Optional integration | Etsy Open API v3 (bring your own API key) |
+<img src=".github/assets/scene.gif" alt="Inntena's 3D login scene: a glowing terracotta sphere pulsing above a slowly turning ring of pillars" width="300">
 
-## Getting Started
+<br>
 
-Want to run your own instance instead of using the [live demo](https://niche-radar.onrender.com)? It's fully self-hostable — your own Docker Postgres, your own secrets, independent from anyone else's copy.
+[Features](#-what-it-does) · [How it works](#-how-it-works) · [Run it locally](#-run-it-locally) · [Tech stack](#-tech-stack) · [Roadmap](#-roadmap) · [Contributing](#-contributing)
 
-### Prerequisites
+</div>
 
-- [Node.js](https://nodejs.org/) 20 or higher
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (to run PostgreSQL)
+---
 
-### Setup
+## Why Inntena?
 
-1. Clone the repo:
+If you sell digital products on Etsy (clip art, SVGs, printables, planners), timing is everything. Arrive
+early to a niche and you have the shelf almost to yourself; arrive late and you are listing number
+100,000. Tools that answer *"what's about to take off?"* exist (eRank, Alura, Everbee), but they are paid
+and closed.
+
+Inntena puts the two signals that matter side by side:
+
+| | Signal | Source |
+|---|---|---|
+| 📈 | **Demand**: is search interest rising? | Google Trends, by region |
+| 🏪 | **Supply**: how many sellers already compete? | Etsy's live listing count |
+
+When demand is climbing and few people are selling yet, that's an **Opportunity**.
+
+---
+
+## ✨ What it does
+
+<img src=".github/assets/dashboard-dark.png" alt="The Inntena dashboard in dark mode: Discover suggestions, the keyword list with verdict badges, the demand / supply / verdict panel and a two-region trend chart">
+
+### 🔭 Discover: ideas you are not tracking yet
+A strip of fresh niche ideas at the top of the dashboard, built from three sources:
+- **Rising Google Shopping searches**: buying-intent queries growing fast right now, such as *"papel picado template"* or *"friendsgiving invitation"*.
+- **Upcoming seasons**: Halloween, Day of the Dead, Christmas and more, suggested weeks before they peak.
+- **A curated list of 168 digital-product niches**, shuffled daily.
+
+Every idea is filtered to terms that **already sell on Etsy (1,000–100,000 listings) but aren't saturated**.
+Not into any of them? Hit **More ideas**. One click on **Track** adds an idea to your list.
+
+### 🧭 The verdict: demand × supply
+For each keyword, Inntena compares the last 14 days of search interest with the 14 before, and puts that
+next to the number of competing Etsy listings. You get a plain-language verdict:
+
+`▲ Opportunity` · `△ Promising` · `→ Steady` · `◆ Crowded` · `▼ Cooling`
+
+Pick the Etsy category that matches your product (Craft Supplies, Paper & Party, Weddings…) and the supply
+count narrows to your real competition. Pick a region and you also see how many of those sellers are local.
+
+### 🌍 Multi-region trend charts
+Compare up to three regions at once against Worldwide, over 7, 30 or 90 days. The chart sits next to the
+**rising related searches** for each region, with growth shown as `+4,350%` or `BREAKOUT`.
+
+<img src=".github/assets/related-and-etsy.png" alt="Rising related searches for two regions next to the 'On Etsy now' panel (listing examples blurred in this screenshot)">
+
+### 🛍️ On Etsy now
+The top five Etsy listings for your keyword, each linking straight to Etsy, so you can see what the
+competition looks like before you design anything. Listing examples are blurred in the screenshot above
+because they belong to their sellers. In the app they are shown live and never older than 6 hours, as
+Etsy's API terms require.
+
+### 🗂️ And the everyday things
+- **Pin, sort, search and archive** keywords. Archived ones keep their data for 15–90 days and can be restored.
+- **Up to 15 active keywords** per account, so daily collection stays fast and polite to Google.
+- **Automatic daily collection.** If Google blocks a run, the dashboard tells you when and why.
+- **Light and dark themes** and an **English / Español** interface, remembered per browser.
+- **Full account management**: email verification, password reset, password change and account deletion.
+
+<details>
+<summary><b>☀️ See it in light mode</b></summary>
+<br>
+<img src=".github/assets/dashboard-light.png" alt="The Inntena dashboard in light mode">
+</details>
+
+<details>
+<summary><b>🔐 See the sign-in page</b></summary>
+<br>
+<img src=".github/assets/login.png" alt="The Inntena login page with its animated 3D scene">
+</details>
+
+---
+
+## ⚙️ How it works
+
+```mermaid
+flowchart LR
+    GA["⏰ GitHub Actions<br/>daily cron"] -->|"POST /api/internal/collect"| API
+    subgraph Render
+      API["Express API<br/>+ React app"]
+    end
+    API -->|"one keyword at a time,<br/>with jittered delays"| GT["Google Trends"]
+    API -->|"queued, ≤ 5 req/s,<br/>cached ≤ 24 h"| ETSY["Etsy Open API v3"]
+    API <--> DB[("PostgreSQL<br/>on Neon")]
+    API -->|"verification & reset"| SG["SendGrid"]
+    U["🧑‍🎨 You"] --> API
+```
+
+1. **Collect.** Once a day a GitHub Actions workflow triggers a protected endpoint. The server walks every
+   tracked keyword and region one request at a time, with jittered delays, so it never hammers Google.
+   - A circuit breaker stops the run on repeated failures.
+   - An HTML response from Google means the run was blocked, so it stops at once and reports it.
+   - The workflow waits for the real outcome and fails loudly if the run did not finish.
+2. **Enrich.** When you open the dashboard, Etsy listing counts are fetched on demand through a rate-limited
+   queue, shared and cached across users, and never shown when older than 24 hours.
+3. **Decide.** The browser combines demand momentum and supply into the verdict, so changing region or
+   category is instant.
+
+Everything Etsy-related is **optional**. Without an Etsy key, Inntena still works fully on Google Trends data.
+
+---
+
+## 🚀 Try it
+
+**👉 [niche-radar.onrender.com](https://niche-radar.onrender.com)**
+
+Create a free account, add a keyword like `boho rainbow clipart`, and check back after the next daily
+collection. Or start straight from the **Discover** strip.
+
+> The demo runs on free hosting, so new keywords get their data on the next daily run, and Google
+> occasionally rate-limits shared server IPs. If that happens, the dashboard says so and the next run
+> retries.
+
+---
+
+## 💻 Run it locally
+
+You need **Node.js 20+** and **Docker Desktop** (for PostgreSQL).
+
 ```bash
+# 1. Clone and install
 git clone https://github.com/arambs22/inntena.git
 cd inntena
-```
-
-2. Install backend dependencies:
-```bash
 npm install
-```
+npm install --prefix client
 
-3. Install frontend dependencies:
-```bash
-cd client && npm install && cd ..
-```
-
-4. Copy the environment variables file:
-```bash
+# 2. Configure: copy the example env and fill in two secrets
 cp .env.example .env
-```
-   Generate values for `JWT_SECRET` and `CRON_SECRET` (each needs to be at
-   least 32 characters — anything shorter fails validation on startup):
-```bash
-openssl rand -base64 48
-```
-   Run it twice and paste one result into each variable in `.env`.
+openssl rand -base64 48   # run twice: one for JWT_SECRET, one for CRON_SECRET (≥ 32 chars each)
 
-   `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, and `APP_URL` are also
-   optional, same spirit as `ETSY_API_KEY` above — without SendGrid
-   credentials, verification/password-reset emails are just logged to the
-   console instead of sent, which is fine for local dev. Sent over
-   SendGrid's HTTPS API rather than SMTP, since most free-tier hosts
-   (including Render) block outbound SMTP ports.
-
-   `ETSY_API_KEY` and `ETSY_API_SECRET` (both required to enable Etsy
-   features), `SUPPORT_EMAIL` and `OPERATOR_NAME` are optional too. See
-   "Etsy supply data" below.
-
-5. Start PostgreSQL with Docker Compose:
-```bash
+# 3. Start Postgres and create the schema
 docker compose up -d
-```
-   This also creates a second, empty `inntena_test` database on the same
-   container (via `docker/init-test-db.sql`), used only by the test suite
-   below — it never touches your regular `inntena` data.
-
-6. Apply the database schema:
-```bash
 npm run db:migrate
+
+# 4. Run backend and frontend (two terminals)
+npm run dev                 # API on http://localhost:3000
+npm run dev --prefix client # app on http://localhost:5173
 ```
 
-6a. (Optional) Run the test suite:
+Open **http://localhost:5173**, sign up, and you're in. In development, verification and reset emails are
+printed to the server console, so no email account is needed.
+
+<details>
+<summary><b>Collect some data right away</b></summary>
+
+```bash
+npm run collect -- --geo=US     # one region; omit --geo for Worldwide
+```
+Collection is deliberately sequential and slow (about 20 seconds per keyword and region), so Google
+doesn't block you.
+</details>
+
+<details>
+<summary><b>Want fake data to explore the UI?</b></summary>
+
+`docker/seed-dev.sql` fills an existing account with 12 realistic keywords, 90 days of trends in two
+regions and rising searches. **Local development only.**
+
+```bash
+docker exec -i inntena-postgres psql -U inntena -d inntena -v email=you@example.com < docker/seed-dev.sql
+```
+</details>
+
+<details>
+<summary><b>Optional integrations (Etsy, email)</b></summary>
+
+| Variable | What it enables |
+|---|---|
+| `ETSY_API_KEY` + `ETSY_API_SECRET` | Supply counts, verdicts, Etsy filtering in Discover. Get them at [etsy.com/developers](https://www.etsy.com/developers). |
+| `ETSY_LISTING_SAMPLES_ENABLED=true` | The "On Etsy now" listing examples. Turn it on only once Etsy has approved that use for your app. |
+| `SENDGRID_API_KEY` + `SENDGRID_FROM_EMAIL` | Real verification and reset emails, sent over HTTPS, so it works on hosts that block SMTP. |
+| `SUPPORT_EMAIL`, `OPERATOR_NAME` | Contact details shown in the footer and on the legal pages. |
+
+If you host your own instance with Etsy enabled, read Etsy's API Terms and adapt the Terms and Privacy pages
+(`client/src/lib/legalContent.ts`) to your deployment.
+</details>
+
+<details>
+<summary><b>Tests</b></summary>
+
 ```bash
 cp .env.test.example .env.test
-npm test
+npm test                    # 230+ backend tests against a real Postgres test database (no mocks)
+npm test --prefix client    # 150+ frontend logic tests
 ```
-   The tests run against the real `inntena_test` database from step 5
-   (migrations included — `npm test` applies them automatically before
-   running), not mocks. The frontend has its own, separate suite for
-   pure logic (`npm test --prefix client`) — no database needed.
+CI runs typecheck, lint, `npm audit` and both suites on every push.
+</details>
 
-7. Start the backend (hot-reload):
-```bash
-npm run dev
-```
+<details>
+<summary><b>Deploy your own</b></summary>
 
-8. In a **second terminal**, start the frontend:
-```bash
-cd client && npm run dev
-```
+`render.yaml` is a ready Render Blueprint. Point `DATABASE_URL` at any Postgres (the demo uses
+[Neon](https://neon.tech)), set the secrets in the Render dashboard, and every deploy runs the migrations
+before the server starts. To get daily collection, set the repo secrets `NICHERADAR_URL` (your app URL) and
+`CRON_SECRET` for `.github/workflows/collect-trends.yml`.
+</details>
 
-9. Open **http://localhost:5173** — that's the dashboard. (Vite proxies API
-   requests to the backend on port 3000 automatically, so the session
-   cookie works in dev without any CORS setup.)
+---
 
-   Optional sanity check on the backend directly:
-```bash
-curl http://localhost:3000/health
-```
-```json
-   {
-     "status": "ok",
-     "database": "connected",
-     "etsyIntegration": "disabled",
-     "timestamp": "2026-08-18T12:00:00.000Z"
-   }
-```
-   `etsyIntegration` shows `"disabled"` unless you've configured an Etsy API
-   key in `.env` — that integration is entirely optional, the app works
-   fully without it using Google Trends data only.
+## 🧱 Tech stack
 
-### Automatic daily collection (optional, for your own deployment)
+| Layer | Tools |
+|---|---|
+| **Frontend** | React 19, Vite, TypeScript, Tailwind CSS, React Router, Recharts, Three.js |
+| **Backend** | Node.js 22, Express, TypeScript, Zod |
+| **Data** | PostgreSQL, Drizzle ORM and drizzle-kit migrations |
+| **Auth & security** | bcrypt, JWT in an httpOnly cookie, Helmet with a strict CSP, per-IP rate limiting, single-use hashed tokens |
+| **Integrations** | Google Trends (unofficial API), Etsy Open API v3, SendGrid |
+| **Infra** | Render (app), Neon (database), GitHub Actions (CI and daily cron), Dependabot |
+| **Quality** | Vitest and Supertest against a real database, oxlint, `npm audit` in CI |
 
-The live demo collects fresh data once a day via
-`.github/workflows/collect-trends.yml`, which calls a `CRON_SECRET`-protected
-endpoint on the deployed instance. If you deploy your own copy and want the
-same, point that workflow's `NICHERADAR_URL` secret at your instance and set
-`CRON_SECRET` to match your `.env`. Locally, you can trigger a one-off
-collection yourself instead:
-```bash
-npm run collect -- --geo=US
-```
+---
 
-### Etsy supply data (optional)
+## 🗺️ Roadmap
 
-With `ETSY_API_KEY` and `ETSY_API_SECRET` set, each keyword also shows how
-many active Etsy listings match it, and a verdict that combines that supply
-with Google Trends demand. Without them nothing about Etsy appears. You need
-your own Etsy developer app (https://www.etsy.com/developers); the app uses
-the public listings endpoint only, caches a single count per term for at most
-24 hours, and shows Etsy's required trademark notice. The request queue, rate
-guard and circuit breaker live in server memory, so the feature assumes a
-single server instance (several instances would multiply Etsy traffic and
-keep separate breaker state). If you host your own
-instance, read Etsy's API Terms of Use and review the Terms and Privacy pages
-(`client/src/lib/legalContent.ts`), which describe the reference deployment
-and must be true of yours.
+Inntena is **actively developed**. Next up:
 
-Each keyword can be scoped to an Etsy category, and the supply panel adds a
-local count (sellers based in the chosen demand region's country). A
-"Discover" strip suggests new keywords from rising Google Trends searches and
-upcoming seasons. Crowded terms (more than 100,000 Etsy listings) are dropped
-when their count is known; terms beyond the daily lookup cap, or still being
-checked, are shown with unknown supply. "On Etsy now" shows up to five
-current listings per keyword, exactly as Etsy returns them and never more than
-6 hours old; it stays off unless `ETSY_LISTING_SAMPLES_ENABLED=true`, which
-you should only set once Etsy has approved your app's purpose for it.
+- [ ] Better Discover ideas as more Google Shopping data accumulates
+- [ ] Translate backend error messages (the UI is bilingual, some API errors are still Spanish-only)
+- [ ] Component and end-to-end tests for the frontend
+- [ ] Shared state (rate limits, queues) ready for more than one server instance
 
-## Project Status
+Ideas on the table, not started yet:
+- **Prompt suggestions** for AI image tools based on a detected trend
+- **Browser extension** that shows Inntena's verdict directly on Etsy search pages
 
-The core product is complete and live: multi-user auth, the full trend
-dashboard (multi-region comparison, keyword history, i18n), hardened and
-deployed to production on Render. See the commit history for detailed
-progress.
+Have an idea? [Open an issue](https://github.com/arambs22/inntena/issues). Feedback from real sellers is the most valuable kind.
 
-The Etsy Open API v3 integration (listing counts and an opportunity
-verdict, demand vs. supply) is built and optional; it only appears when an
-instance has an Etsy key configured.
+---
 
-## Roadmap
+## 🤝 Contributing
 
-Ideas that are documented but intentionally **not** built yet:
+Contributions are very welcome: bug reports, ideas, translations, docs or code. Read
+**[CONTRIBUTING.md](./CONTRIBUTING.md)** to get set up, then open a pull request against `main`. Small,
+focused PRs with a test are the easiest to review.
 
-- **AI prompt suggestions** — once a trend is detected, suggest generation
-  prompts (for tools like Flux/ComfyUI) tailored to that aesthetic.
-- **Browser extension** — an overlay directly on Etsy's own pages, similar
-  to tools like Everbee, but focused on AI-generated digital product
-  sellers specifically (a gap the existing tools in that space don't cover).
+---
 
-## License
+<div align="center">
 
-[MIT](./LICENSE) © 2026 Aram Barsegyan
+**Built by [Aram Barsegyan](https://github.com/arambs22)** — a Systems Engineering student and Etsy clip-art seller who wanted this tool to exist.
+
+[MIT License](./LICENSE) · © 2026
+
+<sub>The term "Etsy" is a trademark of Etsy, Inc. This application uses the Etsy API but is not endorsed or certified by Etsy, Inc. Google Trends data is accessed through an unofficial client and is not endorsed by Google.</sub>
+
+</div>
