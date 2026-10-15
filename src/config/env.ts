@@ -19,6 +19,11 @@ const envSchema = z.object({
   // features are disabled rather than the app failing to start.
   ETSY_API_KEY: z.string().optional(),
   ETSY_API_SECRET: z.string().optional(),
+  // Listing examples ("On Etsy now") need Etsy's approval of the updated app purpose; off until the owner enables it.
+  ETSY_LISTING_SAMPLES_ENABLED: z
+    .string()
+    .default("false")
+    .transform((value) => ["true", "1"].includes(value.trim().toLowerCase())),
 
   // Email (SendGrid) is optional: without credentials, verification/reset
   // links are logged instead of sent — dev, self-hosted instances, and tests

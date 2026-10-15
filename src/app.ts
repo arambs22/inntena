@@ -7,7 +7,9 @@ import { healthRouter } from "./routes/health.route.js";
 import { authRouter } from "./routes/auth.route.js";
 import { publicConfigRouter } from "./routes/publicConfig.route.js";
 import { keywordsRouter } from "./routes/keywords.route.js";
+import { etsyListingsRouter } from "./routes/etsyListings.route.js";
 import { supplyRouter } from "./routes/supply.route.js";
+import { discoverRouter } from "./routes/discover.route.js";
 import { regionsRouter } from "./routes/regions.route.js";
 import { trendsRouter } from "./routes/trends.route.js";
 import { internalRouter } from "./routes/internalCollect.route.js";
@@ -32,7 +34,9 @@ export function createApp() {
   // CSP allows Google Fonts (loaded by client/index.html) and inline style
   // attributes (React/Recharts set these constantly via style={{...}}); the
   // theme-flash-prevention script is an external file specifically so
-  // script-src can stay at 'self' with no inline-script exception.
+  // script-src can stay at 'self' with no inline-script exception. Images also
+  // allow Etsy listing thumbnails, which the visitor's browser loads straight
+  // from Etsy's CDN.
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -41,7 +45,7 @@ export function createApp() {
           scriptSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
-          imgSrc: ["'self'", "data:"],
+          imgSrc: ["'self'", "data:", "https://i.etsystatic.com"],
           connectSrc: ["'self'"],
         },
       },
@@ -54,8 +58,10 @@ export function createApp() {
   app.use("/api", apiRateLimiter);
   app.use("/api/auth", authRouter);
   app.use("/api/public-config", publicConfigRouter);
+  app.use("/api/keywords", etsyListingsRouter);
   app.use("/api/keywords", keywordsRouter);
   app.use("/api/supply", supplyRouter);
+  app.use("/api/discover", discoverRouter);
   app.use("/api/regions", regionsRouter);
   app.use("/api/internal", internalRouter);
   app.use("/api", trendsRouter);

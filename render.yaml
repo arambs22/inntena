@@ -41,6 +41,9 @@ services:
         sync: false
       - key: ETSY_API_SECRET
         sync: false
+      # Listing examples ("On Etsy now"). Leave false until Etsy approves the updated app purpose.
+      - key: ETSY_LISTING_SAMPLES_ENABLED
+        value: "false"
       # Public contact details for the footer and legal pages (optional).
       - key: SUPPORT_EMAIL
         sync: false

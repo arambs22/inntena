@@ -10,7 +10,7 @@ describe("etsy_supply table", () => {
     await db
       .insert(etsySupply)
       .values({ term: "boho clipart", listingCount: 250 })
-      .onConflictDoUpdate({ target: etsySupply.term, set: { listingCount: 250 } });
+      .onConflictDoUpdate({ target: [etsySupply.term, etsySupply.taxonomyId, etsySupply.shopLocation], set: { listingCount: 250 } });
 
     const rows = await db.select().from(etsySupply).where(eq(etsySupply.term, "boho clipart"));
     expect(rows).toHaveLength(1);

@@ -82,7 +82,7 @@ describe("GET /api/supply", () => {
     const second = await agent.get("/api/supply");
 
     expect(first.body.enabled).toBe(true);
-    expect(first.body.items).toEqual([{ keywordId: kw!.id, count: null, fetchedAt: null, status: "refreshing" }]);
+    expect(first.body.items).toEqual([{ keywordId: kw!.id, count: null, fetchedAt: null, status: "refreshing", local: null }]);
     expect(second.body.items[0]).toMatchObject({ keywordId: kw!.id, count: 123, status: "fresh" });
     expect(typeof second.body.items[0].fetchedAt).toBe("string");
   });
@@ -169,6 +169,37 @@ describe("GET /api/supply", () => {
     expect(supply.body.items[0]).toMatchObject({ count: null, status: "refreshing" });
     expect(keywordList.status).toBe(200);
     expect(keywordList.body).toHaveLength(1);
+  });
+});
+
+describe("GET /api/supply with categories and seller country", () => {
+  test("uses the keyword's category for the main count", async () => {
+    const user = await createTestUser({ email: "cat@example.com" });
+    await db.insert(keywords).values({ userId: user.id, term: "boho clipart", etsyTaxonomyId: 562 });
+    const agent = await loginAgent("cat@example.com");
+    await agent.get("/api/supply");
+    await etsySupplyService.onIdle();
+    expect(fetchMock).toHaveBeenCalledWith("boho clipart", fetch, { taxonomyId: 562 });
+  });
+
+  test("adds a local count only for a verified country, and none for worldwide or unknown codes", async () => {
+    const user = await createTestUser({ email: "local@example.com" });
+    const [kw] = await db.insert(keywords).values({ userId: user.id, term: "boho clipart" }).returning();
+    await db.insert(etsySupply).values([
+      { term: "boho clipart", listingCount: 73355, fetchedAt: new Date() },
+      { term: "boho clipart", shopLocation: "Mexico", listingCount: 0, fetchedAt: new Date() },
+    ]);
+    const agent = await loginAgent("local@example.com");
+
+    const mx = await agent.get("/api/supply?region=MX");
+    expect(mx.body.items[0]).toMatchObject({ keywordId: kw!.id, count: 73355, local: { region: "MX", count: 0, status: "fresh" } });
+
+    const ww = await agent.get("/api/supply?region=");
+    expect(ww.body.items[0].local).toBeNull();
+    const xx = await agent.get("/api/supply?region=XX");
+    expect(xx.body.items[0].local).toBeNull();
+    await etsySupplyService.onIdle();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.anything(), fetch, expect.objectContaining({ shopLocation: "XX" }));
   });
 });
 

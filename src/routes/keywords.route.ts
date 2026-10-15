@@ -5,6 +5,7 @@ import { db } from "../db/client.js";
 import { keywords, trendSnapshots, relatedQueries, users, keywordCollectionStatus } from "../db/schema.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { MAX_ACTIVE_KEYWORDS_PER_USER } from "../config/limits.js";
+import { isEtsyCategoryId } from "../config/etsyCategories.js";
 import { sortByGrowthDesc } from "../utils/relatedGrowth.js";
 import { MAX_CONSECUTIVE_FAILURES } from "../services/trendCollector.service.js";
 
@@ -66,7 +67,8 @@ keywordsRouter.get("/limit", async (req, res, next) => {
 });
 
 const createKeywordSchema = z.object({
-  term: z.string().trim().min(1, "El término no puede estar vacío").max(100, "El término es demasiado largo"),
+  term: z.string().trim().min(1, "El término no puede estar vacío").max(100, "El término es demasiado largo")
+    .refine((value) => !value.includes("|"), "La keyword no puede contener el carácter |"),
   category: z.string().trim().min(1).max(50, "La categoría es demasiado larga").optional(),
 });
 
@@ -332,6 +334,46 @@ keywordsRouter.patch("/:id/pin", async (req, res, next) => {
     const [updated] = await db
       .update(keywords)
       .set({ pinnedAt: parsed.data.pinned ? new Date() : null })
+      .where(and(eq(keywords.id, id), eq(keywords.userId, req.userId!), isNull(keywords.removedAt)))
+      .returning();
+
+    if (!updated) {
+      res.status(404).json({ error: "Keyword no encontrada" });
+      return;
+    }
+
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+const etsyCategorySchema = z.object({
+  taxonomyId: z
+    .number()
+    .int()
+    .nullable()
+    .refine((id) => id === null || isEtsyCategoryId(id), { message: "Categoría de Etsy no válida" }),
+});
+
+/** PATCH /:id/etsy-category — sets or clears the Etsy category that scopes an active keyword's supply count and listing examples. */
+keywordsRouter.patch("/:id/etsy-category", async (req, res, next) => {
+  try {
+    const id = parseIdParam(req);
+    if (id === null) {
+      res.status(400).json({ error: "ID inválido" });
+      return;
+    }
+
+    const parsed = etsyCategorySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+      return;
+    }
+
+    const [updated] = await db
+      .update(keywords)
+      .set({ etsyTaxonomyId: parsed.data.taxonomyId })
       .where(and(eq(keywords.id, id), eq(keywords.userId, req.userId!), isNull(keywords.removedAt)))
       .returning();
 

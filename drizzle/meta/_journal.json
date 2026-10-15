@@ -43,6 +43,13 @@
       "when": 1791867968013,
       "tag": "0005_dashing_kate_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791953494244,
+      "tag": "0006_colorful_kat_farrell",
+      "breakpoints": true
     }
   ]
 }

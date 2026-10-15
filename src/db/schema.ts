@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, unique, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, unique, boolean, primaryKey, jsonb } from "drizzle-orm/pg-core";
 
 /** Registered users. Passwords are stored as bcrypt hashes, never in plain text. */
 export const users = pgTable("users", {
@@ -40,6 +40,8 @@ export const keywords = pgTable(
     autoCollectPaused: boolean("auto_collect_paused").notNull().default(false),
     /** When the keyword was pinned to the top of the list; null when not pinned. Cleared on archive. */
     pinnedAt: timestamp("pinned_at"),
+    /** Etsy category used to scope this keyword's supply count and listing examples; null means all categories. */
+    etsyTaxonomyId: integer("etsy_taxonomy_id"),
   },
   (table) => ({
     // Uniqueness is scoped per user: different users may track the
@@ -115,12 +117,43 @@ export const keywordCollectionStatus = pgTable(
 );
 
 /**
- * Latest Etsy active-listing count per normalized search term. Shared by all users: a term costs one Etsy
- * request per refresh window no matter how many people track it. Deliberately one row per term, overwritten on
- * refresh — Etsy's API terms forbid keeping Etsy content longer than needed, so no history is stored.
+ * Latest Etsy active-listing count per normalized search term, Etsy category and seller country. Shared by all
+ * users: one cache key costs one Etsy request per refresh window no matter how many people need it. `taxonomyId` 0
+ * means all categories and `shopLocation` '' means sellers anywhere; non-null sentinels keep the primary key simple.
+ * One row per key, overwritten on refresh — Etsy's terms forbid keeping its content longer than needed.
  */
-export const etsySupply = pgTable("etsy_supply", {
-  term: text("term").primaryKey(),
-  listingCount: integer("listing_count").notNull(),
-  fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+export const etsySupply = pgTable(
+  "etsy_supply",
+  {
+    term: text("term").notNull(),
+    taxonomyId: integer("taxonomy_id").notNull().default(0),
+    shopLocation: text("shop_location").notNull().default(""),
+    listingCount: integer("listing_count").notNull(),
+    fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.term, table.taxonomyId, table.shopLocation] }),
+  })
+);
+
+/** One Etsy listing as shown to users, exactly as Etsy returned it. Nothing else from the listing is kept. */
+export interface ListingSampleRow {
+  listingId: number;
+  title: string;
+  price: number | null;
+  currency: string | null;
+  url: string;
+  thumbnailUrl: string | null;
+  favorites: number;
+  views: number;
+}
+
+/**
+ * Up to five example listings per normalized term and Etsy category (`key` = "term|taxonomyId"), shown for at most
+ * six hours and then deleted, as Etsy's terms require for listing content.
+ */
+export const etsyListingSamples = pgTable("etsy_listing_samples", {
+  key: text("key").primaryKey(),
+  payload: jsonb("payload").$type<ListingSampleRow[]>().notNull(),
+  fetchedAt: timestamp("fetched_at").notNull(),
 });
