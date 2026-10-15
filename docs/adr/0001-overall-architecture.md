@@ -161,6 +161,20 @@ all users, a trademark notice is displayed, and users accept Terms of Use
 and a Privacy Policy. The full design and the reasons are in
 `docs/superpowers/specs/2026-10-09-etsy-supply-design.md`.
 
+*Updated 2026-10-14.* The Etsy integration now also narrows counts by Etsy
+category and by the sellers' country (English country names verified against
+the live API, because an unknown name silently returns 0), shows up to five
+listing examples per keyword exactly as Etsy returns them (cached at most 6
+hours, the limit Etsy sets for listing content), and feeds a "Discover" strip
+that suggests keywords from Google Trends breakouts and our own season
+calendar, using Etsy only to drop crowded terms (more than 100,000 listings)
+when their count is known; terms beyond the daily lookup cap or still being
+checked are shown with unknown supply. Nothing is computed from listing
+content and nothing from Etsy reaches any third party or model. Listing
+examples sit behind `ETSY_LISTING_SAMPLES_ENABLED` (off by default) until Etsy
+approves the updated app purpose. Details:
+`docs/superpowers/specs/2026-10-14-etsy-max-dashboard-design.md`.
+
 ## Alternatives considered and rejected
 
 - **Prisma** instead of Drizzle — rejected for the reasons above (extra

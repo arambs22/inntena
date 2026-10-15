@@ -181,6 +181,16 @@ instance, read Etsy's API Terms of Use and review the Terms and Privacy pages
 (`client/src/lib/legalContent.ts`), which describe the reference deployment
 and must be true of yours.
 
+Each keyword can be scoped to an Etsy category, and the supply panel adds a
+local count (sellers based in the chosen demand region's country). A
+"Discover" strip suggests new keywords from rising Google Trends searches and
+upcoming seasons. Crowded terms (more than 100,000 Etsy listings) are dropped
+when their count is known; terms beyond the daily lookup cap, or still being
+checked, are shown with unknown supply. "On Etsy now" shows up to five
+current listings per keyword, exactly as Etsy returns them and never more than
+6 hours old; it stays off unless `ETSY_LISTING_SAMPLES_ENABLED=true`, which
+you should only set once Etsy has approved your app's purpose for it.
+
 ## Project Status
 
 The core product is complete and live: multi-user auth, the full trend
