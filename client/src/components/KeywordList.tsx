@@ -6,6 +6,7 @@ import type { Keyword } from "../lib/types";
 import { VerdictBadge } from "./VerdictBadge";
 import { formatCount } from "../lib/opportunity";
 import { growthLocale } from "../lib/growth";
+import { failedRegions, formatAttemptTime, type RegionFailure } from "../lib/collectionStatus";
 import type { KeywordInsight } from "../lib/keywordInsights";
 
 interface KeywordListProps {
@@ -20,19 +21,8 @@ interface KeywordListProps {
   insights?: Map<number, KeywordInsight>;
 }
 
-function getBlockedRegions(keyword: Keyword, activeRegions: string[]): string[] {
-  if (!keyword.collectionStatus) return [];
-  return activeRegions.filter((geo) => keyword.collectionStatus?.[geo]?.blocked);
-}
-
-function formatTimestamp(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
-}
-
 interface BlockedIndicatorProps {
-  keyword: Keyword;
-  blockedRegions: string[];
+  failures: RegionFailure[];
 }
 
 /**
@@ -41,8 +31,9 @@ interface BlockedIndicatorProps {
  * trigger's bounding rect on hover/focus, rather than `absolute` inside the list — the keyword
  * list scrolls (`overflow-y-auto`), which would otherwise clip the bubble.
  */
-function BlockedIndicator({ keyword, blockedRegions }: BlockedIndicatorProps) {
-  const { t } = useLanguage();
+function BlockedIndicator({ failures }: BlockedIndicatorProps) {
+  const { t, language } = useLanguage();
+  const anyBlocked = failures.some(({ status }) => status.blocked);
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
 
@@ -77,20 +68,18 @@ function BlockedIndicator({ keyword, blockedRegions }: BlockedIndicatorProps) {
         >
           <span className="absolute -top-1.5 left-3 h-3 w-3 rotate-45 border-l border-t border-border bg-surface" />
           <div className="relative rounded-lg border border-border bg-surface p-3.5 text-xs shadow-lg">
-            <p className="font-display text-sm font-semibold text-text">{t.blocked.title}</p>
-            <p className="mt-1 leading-relaxed text-text-muted">{t.blocked.explanation}</p>
+            <p className="font-display text-sm font-semibold text-text">{anyBlocked ? t.blocked.title : t.blocked.titleFailed}</p>
+            {anyBlocked && <p className="mt-1 leading-relaxed text-text-muted">{t.blocked.explanation}</p>}
             <ul className="mt-2.5 space-y-2 border-t border-border pt-2.5">
-              {blockedRegions.map((geo) => {
-                const status = keyword.collectionStatus?.[geo];
+              {failures.map(({ geo, status }) => {
+                const time = formatAttemptTime(status.lastFailedAt ?? status.lastAttemptAt, growthLocale(language));
                 return (
                   <li key={geo}>
                     <p className="font-medium text-text">{regionLabel(t, geo)}</p>
-                    {status && (
-                      <p className="text-text-muted">
-                        {t.blocked.lastAttempt(formatTimestamp(status.lastAttemptAt))} —{" "}
-                        {t.blocked.failedAttempts(status.consecutiveFailures)}
-                      </p>
-                    )}
+                    <p className="text-text-muted">
+                      {status.failureReason === "googleBlocked" ? t.blocked.failureGoogle(time) : t.blocked.failureOther(time)}
+                      {status.blocked && <> {t.blocked.failedAttempts(status.consecutiveFailures)}</>}
+                    </p>
                   </li>
                 );
               })}
@@ -134,7 +123,7 @@ export function KeywordList({ keywords, activeRegions, onChanged, selectedId, on
   return (
     <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
       {keywords.map((keyword) => {
-        const blockedRegions = getBlockedRegions(keyword, activeRegions);
+        const failures = failedRegions(keyword.collectionStatus, activeRegions);
         return (
           <li
             key={keyword.id}
@@ -170,7 +159,7 @@ export function KeywordList({ keywords, activeRegions, onChanged, selectedId, on
                   </div>
                 )}
               </div>
-              {blockedRegions.length > 0 && <BlockedIndicator keyword={keyword} blockedRegions={blockedRegions} />}
+              {failures.length > 0 && <BlockedIndicator failures={failures} />}
             </div>
             <div className="flex shrink-0 items-center gap-2 text-xs">
               <button

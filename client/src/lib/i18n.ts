@@ -113,7 +113,9 @@ export interface Translations {
     ariaLabel: string;
     title: string;
     explanation: string;
-    lastAttempt: (timestamp: string) => string;
+    titleFailed: string;
+    failureGoogle: (timestamp: string) => string;
+    failureOther: (timestamp: string) => string;
     failedAttempts: (n: number) => string;
   };
   regionTabs: {
@@ -135,6 +137,9 @@ export interface Translations {
     showingDays: (n: number) => string;
     dataAvailableIn: (regions: string) => string;
     noDataYet: string;
+    noDataNew: string;
+    noDataFailedGoogle: (timestamp: string) => string;
+    noDataFailedOther: (timestamp: string) => string;
     relatedRising: string;
     keywordsError: string;
     chartRangeAria: string;
@@ -434,11 +439,14 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       limitReached: (max) => `Llegaste al máximo de ${max} keywords activas. Archiva alguna para agregar otra.`,
     },
     blocked: {
-      ariaLabel: "Recolección bloqueada — pasa el mouse para ver el detalle",
+      ariaLabel: "Problema de recolección — pasa el mouse para ver el detalle",
       title: "Recolección bloqueada",
       explanation:
         "Google Trends rechazó varios intentos seguidos de recolectar datos para esta keyword — normalmente por límite de solicitudes. Se resuelve solo en cuanto una recolección vuelva a tener éxito.",
-      lastAttempt: (timestamp) => `Último intento: ${timestamp}`,
+      titleFailed: "Falló la recolección",
+      failureGoogle: (timestamp) =>
+        `El último intento falló (${timestamp}): Google bloqueó temporalmente la recolección. Se reintentará en la próxima recolección.`,
+      failureOther: (timestamp) => `El último intento falló (${timestamp}). Se reintentará en la próxima recolección.`,
       failedAttempts: (n) => `${n} ${n === 1 ? "intento fallido" : "intentos fallidos"} seguidos`,
     },
     regionTabs: {
@@ -460,6 +468,11 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       showingDays: (n) => `Mostrando ${n} ${n === 1 ? "día" : "días"}`,
       dataAvailableIn: (regions) => `Ya tienes datos en: ${regions}`,
       noDataYet: "Todavía no hay datos recolectados para esta keyword.",
+      noDataNew: "Todavía no hay datos. Las keywords nuevas se recolectan en la próxima recolección diaria.",
+      noDataFailedGoogle: (timestamp) =>
+        `Intentamos recolectar datos el ${timestamp}, pero Google lo bloqueó temporalmente. Se reintentará en la próxima recolección.`,
+      noDataFailedOther: (timestamp) =>
+        `Intentamos recolectar datos el ${timestamp}, pero el intento falló. Se reintentará en la próxima recolección.`,
       relatedRising: "Related queries en alza",
       keywordsError: "No se pudieron cargar tus keywords. Intenta de nuevo en unos minutos.",
       chartRangeAria: "Rango de tiempo del gráfico",
@@ -736,11 +749,14 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       limitReached: (max) => `You've reached the limit of ${max} active keywords. Archive one to add another.`,
     },
     blocked: {
-      ariaLabel: "Collection blocked — hover for details",
+      ariaLabel: "Collection problem — hover for details",
       title: "Collection blocked",
       explanation:
         "Google Trends rejected several collection attempts in a row for this keyword — usually a rate limit. It resolves itself as soon as a collection succeeds again.",
-      lastAttempt: (timestamp) => `Last attempt: ${timestamp}`,
+      titleFailed: "Collection failed",
+      failureGoogle: (timestamp) =>
+        `Last attempt failed (${timestamp}): Google temporarily blocked the collection. It will be retried on the next run.`,
+      failureOther: (timestamp) => `Last attempt failed (${timestamp}). It will be retried on the next run.`,
       failedAttempts: (n) => `${n} failed ${n === 1 ? "attempt" : "attempts"} in a row`,
     },
     regionTabs: {
@@ -762,6 +778,11 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       showingDays: (n) => `Showing ${n} ${n === 1 ? "day" : "days"}`,
       dataAvailableIn: (regions) => `You already have data for: ${regions}`,
       noDataYet: "No data collected for this keyword yet.",
+      noDataNew: "No data yet. New keywords are collected in the next daily run.",
+      noDataFailedGoogle: (timestamp) =>
+        `We tried to collect data on ${timestamp} but Google temporarily blocked it. It will be retried on the next run.`,
+      noDataFailedOther: (timestamp) =>
+        `We tried to collect data on ${timestamp} but the attempt failed. It will be retried on the next run.`,
       relatedRising: "Rising related queries",
       keywordsError: "Couldn't load your keywords. Try again in a few minutes.",
       chartRangeAria: "Chart time range",

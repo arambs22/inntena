@@ -11,6 +11,10 @@ export interface KeywordRegionStatus {
   lastAttemptAt: string;
   lastSuccessAt: string | null;
   consecutiveFailures: number;
+  /** ISO time of the last failed attempt; null when the last attempt succeeded. */
+  lastFailedAt: string | null;
+  /** Why the last attempt failed; null when it did not fail. */
+  failureReason: "googleBlocked" | "other" | null;
 }
 
 export interface Keyword {

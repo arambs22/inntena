@@ -32,6 +32,8 @@ import { SupplyStrip } from "../components/SupplyStrip";
 import { AppFooter } from "../components/AppFooter";
 import { DemandRegionSelector } from "../components/DemandRegionSelector";
 import { loadDemandRegion, resolveDemandRegion, saveDemandRegion } from "../lib/demandRegion";
+import { latestFailure, formatAttemptTime } from "../lib/collectionStatus";
+import { growthLocale } from "../lib/growth";
 
 const ACTIVE_REGIONS_KEY = "inntena_regions_active";
 /** Where the added-region list lived before it moved to the backend. Read once, migrated, then dropped. */
@@ -55,7 +57,7 @@ function loadRegionList(key: string, fallback: string[]): string[] {
  * with the page.
  */
 export function DashboardPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -248,6 +250,13 @@ export function DashboardPage() {
 
   const visibleSeries = sliceSeries(chartSeries, range);
 
+  const selectedFailure = latestFailure(selectedKeyword?.collectionStatus, activeRegions);
+  const emptyChartMessage = selectedFailure
+    ? (selectedFailure.reason === "googleBlocked" ? t.dashboard.noDataFailedGoogle : t.dashboard.noDataFailedOther)(
+        formatAttemptTime(selectedFailure.at, growthLocale(language)),
+      )
+    : t.dashboard.noDataNew;
+
   const relatedColumns = activeRegions.map((region) => ({
     region,
     rising: relatedByRegion[region]?.find((r) => r.id === selectedId)?.rising ?? [],
@@ -362,7 +371,7 @@ export function DashboardPage() {
                 <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
                   <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{t.dashboard.trend}</h2>
                   <div className="h-[320px]">
-                    <TrendChart series={visibleSeries} />
+                    <TrendChart series={visibleSeries} emptyMessage={emptyChartMessage} />
                   </div>
                 </section>
                 <div className={`grid gap-4 ${listings?.enabled ? "lg:grid-cols-2" : ""}`}>

@@ -11,6 +11,8 @@ export interface RegionTimeline {
 
 interface TrendChartProps {
   series: RegionTimeline[];
+  /** Replaces the default "no data" text, e.g. to explain a failed collection. */
+  emptyMessage?: string;
 }
 
 const TICK_STYLE = { fontSize: 12, fontFamily: '"IBM Plex Mono", monospace', fill: "var(--color-text-muted)" };
@@ -40,11 +42,11 @@ function mergeSeries(series: RegionTimeline[]): Record<string, number | string>[
 }
 
 /** Line chart of one keyword's Google Trends interest-over-time, one line per active region, filling its container. */
-export function TrendChart({ series }: TrendChartProps) {
+export function TrendChart({ series, emptyMessage }: TrendChartProps) {
   const { t } = useLanguage();
   const hasData = series.some((s) => s.timeline.length > 0);
   if (!hasData) {
-    return <p className="text-sm text-text-muted">{t.dashboard.noDataYet}</p>;
+    return <p className="text-sm text-text-muted">{emptyMessage ?? t.dashboard.noDataYet}</p>;
   }
 
   const data = mergeSeries(series);
