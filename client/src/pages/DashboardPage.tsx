@@ -22,9 +22,16 @@ import { useLanguage } from "../context/LanguageContext";
 import { regionLabel } from "../lib/i18n";
 import type { Keyword, KeywordTrend, KeywordRelated } from "../lib/types";
 import { useSupply } from "../lib/useSupply";
+import { useEtsyListings } from "../lib/useEtsyListings";
+import { useDiscover } from "../lib/useDiscover";
+import { EtsyCategorySelect } from "../components/EtsyCategorySelect";
+import { EtsyListings } from "../components/EtsyListings";
+import { DiscoverStrip } from "../components/DiscoverStrip";
 import { buildInsights } from "../lib/keywordInsights";
 import { SupplyStrip } from "../components/SupplyStrip";
 import { AppFooter } from "../components/AppFooter";
+import { DemandRegionSelector } from "../components/DemandRegionSelector";
+import { loadDemandRegion, resolveDemandRegion, saveDemandRegion } from "../lib/demandRegion";
 
 const ACTIVE_REGIONS_KEY = "inntena_regions_active";
 /** Where the added-region list lived before it moved to the backend. Read once, migrated, then dropped. */
@@ -43,9 +50,9 @@ function loadRegionList(key: string, fallback: string[]): string[] {
 
 /**
  * Protected landing page: keyword management plus trend chart and related queries, compared
- * across up to 3 active regions. Clamped to the viewport height so a long keyword list scrolls
- * inside its own panel instead of stretching the whole page; the page itself only scrolls as a
- * fallback if the window is too short to fit everything at once.
+ * across up to 3 active regions. The page scrolls normally; the keyword column is sticky and
+ * viewport-tall, so a long keyword list scrolls inside its own panel while the right side scrolls
+ * with the page.
  */
 export function DashboardPage() {
   const { t } = useLanguage();
@@ -63,12 +70,23 @@ export function DashboardPage() {
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>(loadSortMode);
   const [maxKeywords, setMaxKeywords] = useState<number | null>(null);
-  const { enabled: etsyEnabled, items: supplyItems } = useSupply(keywords.map((keyword) => keyword.id));
+  const [storedDemandRegion, setStoredDemandRegion] = useState<string | null>(loadDemandRegion);
+  const demandRegion = resolveDemandRegion(storedDemandRegion, activeRegions);
+  const supplySignature = keywords.map((keyword) => `${keyword.id}:${keyword.etsyTaxonomyId ?? 0}`).join(",");
+  const { enabled: etsyEnabled, items: supplyItems } = useSupply(supplySignature, demandRegion);
+  const selectedKeyword = keywords.find((k) => k.id === selectedId) ?? null;
+  const listings = useEtsyListings(selectedId, String(selectedKeyword?.etsyTaxonomyId ?? 0));
+  const suggestions = useDiscover(demandRegion, keywords.map((keyword) => keyword.id).join(","));
   const hydratedRegions = useRef(false);
 
   function handleRangeChange(next: ChartRange) {
     setRange(next);
     saveChartRange(next);
+  }
+
+  function handleDemandRegionChange(region: string) {
+    setStoredDemandRegion(region);
+    saveDemandRegion(region);
   }
 
   function handleSortModeChange(next: SortMode) {
@@ -218,10 +236,8 @@ export function DashboardPage() {
     });
   }
 
-  const selectedKeyword = keywords.find((k) => k.id === selectedId) ?? null;
   const arranged = arrangeKeywords(keywords, query, sortMode);
   const atLimit = maxKeywords !== null && keywords.length >= maxKeywords;
-  const demandRegion = activeRegions[0];
   const insights = etsyEnabled ? buildInsights(keywords, demandRegion === undefined ? undefined : trendsByRegion[demandRegion], supplyItems) : undefined;
   const selectedInsight = selectedKeyword && insights ? insights.get(selectedKeyword.id) : undefined;
 
@@ -238,12 +254,10 @@ export function DashboardPage() {
   }));
 
   return (
-    <div className="flex h-screen flex-col overflow-y-auto bg-bg">
+    <div className="flex min-h-screen flex-col bg-bg">
       {user && !user.emailVerified && <VerificationBanner />}
       <Navbar />
-      {/* min-h-0 lets this flex item shrink below its content height. Without it the keyword list's
-          own height can never be bounded, so a long list stretches the whole page instead of scrolling. */}
-      <main className="flex min-h-0 flex-1 flex-col gap-4 px-6 py-4">
+      <main className="flex flex-1 flex-col gap-4 px-6 py-4">
         <RegionTabs
           added={addedRegions}
           active={activeRegions}
@@ -251,8 +265,10 @@ export function DashboardPage() {
           onRemove={handleRemoveRegion}
           onAdd={handleAddRegion}
         />
-        <div className="grid min-h-[480px] flex-1 gap-6 md:grid-cols-[320px_1fr]">
-          <div className="flex min-h-0 flex-col gap-4">
+        {suggestions !== null && <DiscoverStrip suggestions={suggestions} onTracked={() => refetchKeywords()} />}
+        <div className="grid items-start gap-6 md:grid-cols-[320px_1fr]">
+          {/* Sticky, viewport-tall column: a long keyword list scrolls inside it while the page scrolls on the right. */}
+          <div className="flex min-h-0 flex-col gap-4 md:sticky md:top-4 md:max-h-[calc(100vh-2rem)]">
             <KeywordForm
               onCreated={() => refetchKeywords()}
               limitReached={atLimit}
@@ -292,48 +308,74 @@ export function DashboardPage() {
               )}
             </div>
           </div>
-          <div className="min-h-0 rounded-lg border border-border bg-surface p-6 shadow-sm">
-            {selectedId === null ? (
-              <p className="flex h-full items-center justify-center text-center text-sm text-text-muted">
-                {t.dashboard.selectKeywordPrompt}
-              </p>
-            ) : activeRegions.length === 0 ? (
-              <p className="flex h-full items-center justify-center text-center text-sm text-text-muted">
-                {t.dashboard.activateRegionPrompt}
-              </p>
-            ) : loadingTrends ? (
-              <p className="flex h-full items-center justify-center text-center text-sm text-text-muted">
-                {t.dashboard.loadingTrends}
-              </p>
-            ) : (
-              <div className="grid h-full grid-rows-[auto_auto_auto_1fr_auto_auto] gap-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted">{t.dashboard.trend}</h2>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-text-muted">
-                      {t.dashboard.showingDays(countChartDays(visibleSeries))}
-                    </span>
-                    <ChartRangeSelector value={range} onChange={handleRangeChange} />
-                  </div>
-                </div>
-                <p className="text-xs text-text-muted">
-                  {selectedKeyword && selectedKeyword.regions.length > 0
-                    ? t.dashboard.dataAvailableIn(selectedKeyword.regions.map((code) => regionLabel(t, code)).join(", "))
-                    : t.dashboard.noDataYet}
+          <div className="flex min-w-0 flex-col gap-4">
+            {selectedId === null || activeRegions.length === 0 || loadingTrends ? (
+              <section className="rounded-lg border border-border bg-surface p-6 shadow-sm">
+                <p className="py-16 text-center text-sm text-text-muted">
+                  {selectedId === null
+                    ? t.dashboard.selectKeywordPrompt
+                    : activeRegions.length === 0
+                      ? t.dashboard.activateRegionPrompt
+                      : t.dashboard.loadingTrends}
                 </p>
-                {selectedInsight && demandRegion !== undefined ? (
-                  <SupplyStrip insight={selectedInsight} regionName={regionLabel(t, demandRegion)} />
-                ) : (
-                  <div />
-                )}
-                <div className="min-h-[260px]">
-                  <TrendChart series={visibleSeries} />
+              </section>
+            ) : (
+              <>
+                <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h1 className="truncate font-display text-xl font-semibold text-text">{selectedKeyword?.term}</h1>
+                      <p className="text-xs text-text-muted">
+                        {selectedKeyword && selectedKeyword.regions.length > 0
+                          ? t.dashboard.dataAvailableIn(selectedKeyword.regions.map((code) => regionLabel(t, code)).join(", "))
+                          : t.dashboard.noDataYet}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-text-muted">{t.dashboard.showingDays(countChartDays(visibleSeries))}</span>
+                      <ChartRangeSelector value={range} onChange={handleRangeChange} />
+                    </div>
+                  </div>
+                  {selectedInsight && demandRegion !== undefined && (
+                    <div className="mt-4">
+                      <SupplyStrip
+                        insight={selectedInsight}
+                        regionName={regionLabel(t, demandRegion)}
+                        demandControl={
+                          <DemandRegionSelector regions={activeRegions} value={demandRegion} onChange={handleDemandRegionChange} />
+                        }
+                        categoryControl={
+                          selectedKeyword ? (
+                            <EtsyCategorySelect
+                              keywordId={selectedKeyword.id}
+                              value={selectedKeyword.etsyTaxonomyId}
+                              onChanged={() => refetchKeywords()}
+                            />
+                          ) : undefined
+                        }
+                      />
+                    </div>
+                  )}
+                </section>
+                <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+                  <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{t.dashboard.trend}</h2>
+                  <div className="h-[320px]">
+                    <TrendChart series={visibleSeries} />
+                  </div>
+                </section>
+                <div className={`grid gap-4 ${listings?.enabled ? "lg:grid-cols-2" : ""}`}>
+                  <section className="min-w-0 rounded-lg border border-border bg-surface p-5 shadow-sm">
+                    <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{t.dashboard.relatedRising}</h2>
+                    <RelatedQueriesList columns={relatedColumns} />
+                  </section>
+                  {listings?.enabled && (
+                    <section className="min-w-0 rounded-lg border border-border bg-surface p-5 shadow-sm">
+                      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{t.etsy.listingsTitle}</h2>
+                      <EtsyListings data={listings} />
+                    </section>
+                  )}
                 </div>
-                <h2 className="mt-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                  {t.dashboard.relatedRising}
-                </h2>
-                <RelatedQueriesList columns={relatedColumns} />
-              </div>
+              </>
             )}
           </div>
         </div>

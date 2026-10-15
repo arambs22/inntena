@@ -63,7 +63,7 @@ export function buildTerms(language: Language, { operator, contact }: LegalConte
         {
           heading: "4. Fuentes de datos y precisión",
           paragraphs: [
-            "Los datos de tendencia vienen de Google Trends y los de oferta de Etsy. Ambos pueden tener retraso, estar incompletos o ser imprecisos, y el conteo de Etsy no se filtra por categoría. Los veredictos que se muestran (como \"Oportunidad\") son guías aproximadas, no asesoría; tú decides qué crear y vender, bajo tu propio riesgo.",
+            "Los datos de tendencia vienen de Google Trends y los de oferta de Etsy. Ambos pueden tener retraso, estar incompletos o ser imprecisos; el conteo de Etsy se basa en su búsqueda y puede incluir listings que no tienen que ver, aunque elijas una categoría. Los ejemplos de listings se muestran tal como los devuelve Etsy y pueden cambiar o desaparecer. Las sugerencias de \"Descubrir\" son búsquedas en alza y fechas de temporada, no ventas comprobadas. Los veredictos que se muestran (como \"Oportunidad\") son guías aproximadas, no asesoría; tú decides qué crear y vender, bajo tu propio riesgo.",
           ],
         },
         {
@@ -118,7 +118,7 @@ export function buildTerms(language: Language, { operator, contact }: LegalConte
       {
         heading: "4. Data sources and accuracy",
         paragraphs: [
-          "Trend data comes from Google Trends and supply data from Etsy. Both can be delayed, incomplete or inaccurate, and Etsy counts are not filtered by category. The verdicts shown (such as \"Opportunity\") are rough guides, not advice; you decide what to make and sell, at your own risk.",
+          "Trend data comes from Google Trends and supply data from Etsy. Both can be delayed, incomplete or inaccurate; Etsy counts come from its search and may include unrelated listings, even when you choose a category. Listing examples are shown as Etsy returns them and may change or disappear. \"Discover\" suggestions are rising searches and seasonal dates, not proven sales. The verdicts shown (such as \"Opportunity\") are rough guides, not advice; you decide what to make and sell, at your own risk.",
         ],
       },
       {
@@ -176,7 +176,7 @@ export function buildPrivacy(language: Language, { operator, contact }: LegalCon
         {
           heading: "4. Quién lo procesa",
           paragraphs: [
-            "Para operar Inntena usamos: Render (alojamiento de la aplicación), Neon (base de datos) y SendGrid (envío de correos). Procesan datos por cuenta nuestra. La aplicación también carga sus tipografías desde Google Fonts (fonts.googleapis.com y fonts.gstatic.com), por lo que tu dirección IP se envía a Google cada vez que se carga una página.",
+            "Para operar Inntena usamos: Render (alojamiento de la aplicación), Neon (base de datos) y SendGrid (envío de correos). Procesan datos por cuenta nuestra. La aplicación también carga sus tipografías desde Google Fonts (fonts.googleapis.com y fonts.gstatic.com), por lo que tu dirección IP se envía a Google cada vez que se carga una página. Cuando se muestran ejemplos de listings de Etsy, sus imágenes se cargan directamente desde los servidores de Etsy (i.etsystatic.com), así que Etsy recibe tu dirección IP y datos de tu navegador.",
           ],
         },
         {
@@ -230,7 +230,7 @@ export function buildPrivacy(language: Language, { operator, contact }: LegalCon
       {
         heading: "4. Who processes it",
         paragraphs: [
-          "To run Inntena we use: Render (application hosting), Neon (database) and SendGrid (sending emails). They process data on our behalf. The app also loads its fonts from Google Fonts (fonts.googleapis.com and fonts.gstatic.com), which means your IP address is sent to Google whenever a page loads.",
+          "To run Inntena we use: Render (application hosting), Neon (database) and SendGrid (sending emails). They process data on our behalf. The app also loads its fonts from Google Fonts (fonts.googleapis.com and fonts.gstatic.com), which means your IP address is sent to Google whenever a page loads. When Etsy listing examples are shown, their pictures load directly from Etsy's servers (i.etsystatic.com), so Etsy receives your IP address and browser details.",
         ],
       },
       {

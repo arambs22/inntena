@@ -14,6 +14,7 @@ const item = (keywordId: number, count: number | null, status: SupplyItem["statu
   count,
   fetchedAt: count === null ? null : "2026-10-09T10:00:00Z",
   status,
+  local: null,
 });
 
 describe("buildInsights", () => {

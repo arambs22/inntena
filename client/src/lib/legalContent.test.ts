@@ -43,7 +43,7 @@ describe.each(languages)("legal documents (%s)", (language) => {
 
   it("name every service that processes personal data, so the policy cannot drift from the deployment", () => {
     const privacy = allText(buildPrivacy(language, ctx));
-    for (const processor of ["Render", "Neon", "SendGrid", "Google Fonts"]) expect(privacy).toContain(processor);
+    for (const processor of ["Render", "Neon", "SendGrid", "Google Fonts", "i.etsystatic.com"]) expect(privacy).toContain(processor);
   });
 });
 

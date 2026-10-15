@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { growthLocale } from "../lib/growth";
 import type { KeywordInsight } from "../lib/keywordInsights";
+import { regionLabel } from "../lib/i18n";
 import { SUPPLY_HIGH_ABOVE, SUPPLY_LOW_BELOW, formatCount } from "../lib/opportunity";
 import { InfoTip } from "./InfoTip";
 import { VerdictBadge } from "./VerdictBadge";
@@ -18,8 +19,8 @@ interface BlockProps {
 function Block({ title, action, children }: BlockProps) {
   return (
     <div className="min-w-0 rounded border border-border bg-bg px-3 py-2">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs uppercase tracking-wider text-text-muted">{title}</p>
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <p className="whitespace-nowrap text-xs uppercase tracking-wider text-text-muted">{title}</p>
         {action}
       </div>
       <div className="mt-1">{children}</div>
@@ -31,10 +32,14 @@ interface SupplyStripProps {
   insight: KeywordInsight;
   /** Display name of the region the demand figure refers to. */
   regionName: string;
+  /** Optional control rendered in the demand block, e.g. the demand-region selector. */
+  demandControl?: ReactNode;
+  /** Optional control in the supply block, e.g. the Etsy category select. */
+  categoryControl?: ReactNode;
 }
 
 /** Demand / supply / verdict summary for the selected keyword, shown above the chart when Etsy data is enabled. */
-export function SupplyStrip({ insight, regionName }: SupplyStripProps) {
+export function SupplyStrip({ insight, regionName, demandControl, categoryControl }: SupplyStripProps) {
   const { t, language } = useLanguage();
   const locale = growthLocale(language);
   const { supply } = insight;
@@ -68,6 +73,14 @@ export function SupplyStrip({ insight, regionName }: SupplyStripProps) {
         <p className="text-xs text-text-muted">
           {t.supply.updatedAgo(hours)} · {t.supply.sourceEtsy}
         </p>
+        {supply.local && supply.local.count !== null && (
+          <p className="mt-1 flex items-center gap-1 text-xs text-text-muted">
+            {t.etsy.localSupply(supply.local.count.toLocaleString(locale), regionLabel(t, supply.local.region))}
+            <InfoTip label={t.etsy.localHelp}>
+              <p>{t.etsy.localHelp}</p>
+            </InfoTip>
+          </p>
+        )}
       </>
     );
   } else {
@@ -77,9 +90,9 @@ export function SupplyStrip({ insight, regionName }: SupplyStripProps) {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      <Block title={t.supply.demandTitle}>{demand}</Block>
-      <Block title={t.supply.supplyTitle}>{supplyView}</Block>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <Block title={t.supply.demandTitle} action={demandControl}>{demand}</Block>
+      <Block title={t.supply.supplyTitle} action={categoryControl}>{supplyView}</Block>
       <Block
         title={t.supply.verdictTitle}
         action={

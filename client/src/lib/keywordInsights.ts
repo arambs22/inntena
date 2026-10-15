@@ -12,7 +12,7 @@ export interface KeywordInsight {
 }
 
 /**
- * Builds one insight per keyword. `trends` are the Google Trends timelines of ONE region (the first active one),
+ * Builds one insight per keyword. `trends` are the Google Trends timelines of ONE region (the demand region the user chose),
  * so momentum always refers to a single region. A supply count of 0 is real data and counts as low supply.
  */
 export function buildInsights(

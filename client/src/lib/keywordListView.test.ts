@@ -20,6 +20,7 @@ function kw(id: number, term: string, category: string, createdAt: string, pinne
     removedAt: null,
     autoCollectPaused: false,
     pinnedAt,
+    etsyTaxonomyId: null,
     regions: [],
   };
 }

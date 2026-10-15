@@ -218,6 +218,36 @@ export interface Translations {
     termsTitle: string;
     privacyTitle: string;
   };
+  etsy: {
+    demandRegionLabel: string;
+    categoryLabel: string;
+    allCategories: string;
+    categories: Record<"craftSupplies" | "art" | "paperParty" | "weddings" | "homeLiving" | "clothing", string>;
+    localSupply: (count: string, country: string) => string;
+    localHelp: string;
+    listingsTitle: string;
+    listingsLoading: string;
+    listingsUnavailable: string;
+    listingsEmpty: string;
+    listingsUpdated: (hours: number) => string;
+    favorites: (count: string) => string;
+    views: (count: string) => string;
+    openOnEtsy: (title: string) => string;
+  };
+  discover: {
+    title: string;
+    caveat: string;
+    show: string;
+    hide: string;
+    empty: string;
+    track: string;
+    tracking: string;
+    fromRelated: (term: string) => string;
+    breakout: string;
+    season: (event: string, days: number) => string;
+    events: Record<"valentines" | "mothersDay" | "backToSchool" | "halloween" | "dayOfTheDead" | "christmas" | "weddings", string>;
+    supplyUnknown: string;
+  };
   regions: Record<string, string>;
 }
 
@@ -529,6 +559,51 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       termsTitle: "Términos de uso",
       privacyTitle: "Política de privacidad",
     },
+    etsy: {
+      demandRegionLabel: "Demanda en",
+      categoryLabel: "Categoría en Etsy",
+      allCategories: "Todas las categorías",
+      categories: {
+        craftSupplies: "Materiales y herramientas",
+        art: "Arte y coleccionables",
+        paperParty: "Papelería y fiestas",
+        weddings: "Bodas",
+        homeLiving: "Hogar",
+        clothing: "Ropa",
+      },
+      localSupply: (count, country) => `${count} de vendedores en ${country}`,
+      localHelp: "Cuántos listings vienen de vendedores ubicados en ese país. Mide competencia local, no demanda.",
+      listingsTitle: "En Etsy ahora",
+      listingsLoading: "Consultando Etsy…",
+      listingsUnavailable: "Ejemplos de Etsy no disponibles",
+      listingsEmpty: "No hay listings activos en Etsy para este término.",
+      listingsUpdated: (hours) => (hours < 1 ? "Actualizado hace menos de 1 h" : `Actualizado hace ${hours} h`),
+      favorites: (count) => `${count} favoritos`,
+      views: (count) => `${count} vistas`,
+      openOnEtsy: (title) => `Abrir "${title}" en Etsy`,
+    },
+    discover: {
+      title: "Descubrir",
+      caveat: "Búsquedas en alza y fechas de temporada, filtradas por saturación en Etsy. No son ventas comprobadas.",
+      show: "Mostrar",
+      hide: "Ocultar",
+      empty: "Aún no hay sugerencias. Aparecen después de la próxima recolección de tendencias.",
+      track: "Seguir",
+      tracking: "Agregando...",
+      fromRelated: (term) => `Sube junto a "${term}"`,
+      breakout: "Breakout",
+      season: (event, days) => (days === 0 ? `Temporada: ${event} (ya)` : `Temporada: ${event} en ${days} días`),
+      events: {
+        valentines: "San Valentín",
+        mothersDay: "Día de las Madres",
+        backToSchool: "Regreso a clases",
+        halloween: "Halloween",
+        dayOfTheDead: "Día de Muertos",
+        christmas: "Navidad",
+        weddings: "Temporada de bodas",
+      },
+      supplyUnknown: "Oferta sin consultar",
+    },
     regions: REGION_NAMES_ES,
   },
   en: {
@@ -769,6 +844,51 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       lastUpdated: (version) => `Last updated: ${version}`,
       termsTitle: "Terms of Use",
       privacyTitle: "Privacy Policy",
+    },
+    etsy: {
+      demandRegionLabel: "Demand in",
+      categoryLabel: "Etsy category",
+      allCategories: "All categories",
+      categories: {
+        craftSupplies: "Craft Supplies & Tools",
+        art: "Art & Collectibles",
+        paperParty: "Paper & Party Supplies",
+        weddings: "Weddings",
+        homeLiving: "Home & Living",
+        clothing: "Clothing",
+      },
+      localSupply: (count, country) => `${count} from sellers in ${country}`,
+      localHelp: "How many listings come from sellers located in that country. It measures local competition, not demand.",
+      listingsTitle: "On Etsy now",
+      listingsLoading: "Checking Etsy…",
+      listingsUnavailable: "Etsy examples unavailable",
+      listingsEmpty: "No active Etsy listings for this term.",
+      listingsUpdated: (hours) => (hours < 1 ? "Updated less than 1 h ago" : `Updated ${hours} h ago`),
+      favorites: (count) => `${count} favorites`,
+      views: (count) => `${count} views`,
+      openOnEtsy: (title) => `Open "${title}" on Etsy`,
+    },
+    discover: {
+      title: "Discover",
+      caveat: "Rising searches and seasonal dates, filtered by Etsy saturation. These are not proven sales.",
+      show: "Show",
+      hide: "Hide",
+      empty: "No suggestions yet. They appear after the next trend collection.",
+      track: "Track",
+      tracking: "Adding...",
+      fromRelated: (term) => `Rising with "${term}"`,
+      breakout: "Breakout",
+      season: (event, days) => (days === 0 ? `Season: ${event} (now)` : `Season: ${event} in ${days} days`),
+      events: {
+        valentines: "Valentine's Day",
+        mothersDay: "Mother's Day",
+        backToSchool: "Back to school",
+        halloween: "Halloween",
+        dayOfTheDead: "Day of the Dead",
+        christmas: "Christmas",
+        weddings: "Wedding season",
+      },
+      supplyUnknown: "Supply not checked",
     },
     regions: REGION_NAMES_EN,
   },

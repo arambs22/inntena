@@ -22,6 +22,7 @@ export interface Keyword {
   removedAt: string | null;
   autoCollectPaused: boolean;
   pinnedAt: string | null;
+  etsyTaxonomyId: number | null;
   collectionStatus?: Record<string, KeywordRegionStatus>;
   regions: string[];
 }
@@ -81,6 +82,7 @@ export interface SupplyItem {
   count: number | null;
   fetchedAt: string | null;
   status: SupplyStatus;
+  local: LocalSupply | null;
 }
 
 export interface SupplyResponse {
@@ -93,4 +95,49 @@ export interface PublicConfig {
   supportEmail: string | null;
   operatorName: string | null;
   termsVersion: string;
+}
+
+/** Supply from sellers based in one country, for the chosen demand region. */
+export interface LocalSupply {
+  region: string;
+  count: number | null;
+  fetchedAt: string | null;
+  status: SupplyStatus;
+}
+
+/** One Etsy listing, exactly as Etsy returned it. */
+export interface ListingSample {
+  listingId: number;
+  title: string;
+  price: number | null;
+  currency: string | null;
+  url: string;
+  thumbnailUrl: string | null;
+  favorites: number;
+  views: number;
+}
+
+/** GET /api/keywords/:id/etsy-listings. `listings` is null while not yet fetched. */
+export interface ListingSamplesResponse {
+  enabled: boolean;
+  status?: SupplyStatus;
+  fetchedAt?: string | null;
+  listings: ListingSample[] | null;
+}
+
+export type SeasonEvent = "valentines" | "mothersDay" | "backToSchool" | "halloween" | "dayOfTheDead" | "christmas" | "weddings";
+
+export type DiscoverOrigin =
+  | { type: "related"; from: string; breakout: boolean }
+  | { type: "season"; event: SeasonEvent; daysUntil: number };
+
+export interface DiscoverSuggestion {
+  term: string;
+  origin: DiscoverOrigin;
+  /** Etsy supply for the term (all categories, anywhere); null when Etsy is off or the daily cap was reached. */
+  supply: { count: number | null; status: SupplyStatus; fetchedAt: string | null } | null;
+}
+
+export interface DiscoverResponse {
+  suggestions: DiscoverSuggestion[];
 }
