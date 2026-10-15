@@ -8,3 +8,9 @@
 export function getTodayLocal(): string {
   return new Date().toLocaleDateString("en-CA");
 }
+
+/** Returns the instant at which the current local day started (local midnight of the running process). */
+export function getStartOfTodayLocal(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}

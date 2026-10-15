@@ -10,6 +10,26 @@ export interface RelatedQueryResult {
   growthValue: string;
 }
 
+/**
+ * Thrown when Google answers a Trends request with an HTML page (redirect,
+ * "unusual traffic" notice) instead of JSON. The block applies to the whole
+ * IP, so callers should stop issuing further requests.
+ */
+export class GoogleBlockedError extends Error {
+  readonly code = "GOOGLE_BLOCKED";
+
+  constructor() {
+    super("Google returned an HTML page instead of data (likely a temporary block of this IP)");
+    this.name = "GoogleBlockedError";
+  }
+}
+
+/** Parses a raw Trends response, raising GoogleBlockedError when it is HTML. */
+function parseTrendsResponse(raw: string): any {
+  if (raw.trim().startsWith("<")) throw new GoogleBlockedError();
+  return JSON.parse(raw);
+}
+
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
 /**
@@ -35,7 +55,7 @@ export async function fetchInterestOverTime(
     geo,
   });
 
-  const parsed = JSON.parse(raw);
+  const parsed = parseTrendsResponse(raw);
   const timelineData = parsed.default?.timelineData ?? [];
 
   return timelineData
@@ -62,7 +82,7 @@ export async function fetchRelatedQueries(
     ...(property ? { property } : {}),
   });
 
-  const parsed = JSON.parse(raw);
+  const parsed = parseTrendsResponse(raw);
   const rankedList = parsed.default?.rankedList?.[1]?.rankedKeyword ?? [];
 
   return rankedList.map((item: any) => ({

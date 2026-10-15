@@ -5,7 +5,11 @@ vi.mock("google-trends-api", () => ({
 }));
 
 import googleTrends from "google-trends-api";
-import { fetchInterestOverTime, fetchRelatedQueries } from "../../src/services/googleTrends.service.js";
+import {
+  fetchInterestOverTime,
+  fetchRelatedQueries,
+  GoogleBlockedError,
+} from "../../src/services/googleTrends.service.js";
 
 describe("fetchInterestOverTime", () => {
   test("drops the partial trailing point", async () => {
@@ -33,5 +37,27 @@ describe("fetchRelatedQueries", () => {
     expect(spy.mock.calls[0]![0]).not.toHaveProperty("property");
     await fetchRelatedQueries("a", "US", "froogle");
     expect(spy.mock.calls[1]![0]).toMatchObject({ property: "froogle" });
+  });
+});
+
+describe("Google block detection", () => {
+  const html = '  <html lang="en"><head><title>Sorry</title></head></html>';
+
+  test("fetchInterestOverTime throws GoogleBlockedError when Google answers with HTML", async () => {
+    vi.mocked(googleTrends.interestOverTime).mockResolvedValueOnce(html);
+    const err = await fetchInterestOverTime("x", "").catch((e) => e);
+    expect(err).toBeInstanceOf(GoogleBlockedError);
+    expect(err.code).toBe("GOOGLE_BLOCKED");
+  });
+
+  test("fetchRelatedQueries throws GoogleBlockedError when Google answers with HTML", async () => {
+    vi.mocked(googleTrends.relatedQueries).mockResolvedValueOnce(html);
+    await expect(fetchRelatedQueries("x", "")).rejects.toBeInstanceOf(GoogleBlockedError);
+  });
+
+  test("other unparsable bodies still surface as plain parse errors", async () => {
+    vi.mocked(googleTrends.interestOverTime).mockResolvedValueOnce("not json");
+    const err = await fetchInterestOverTime("x", "").catch((e) => e);
+    expect(err).not.toBeInstanceOf(GoogleBlockedError);
   });
 });

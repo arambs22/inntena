@@ -1,7 +1,7 @@
 import { db as defaultDb } from "../db/client.js";
 import { discoverRising } from "../db/schema.js";
 import { eq, gte } from "drizzle-orm";
-import { fetchRelatedQueries, sleep as defaultSleep } from "./googleTrends.service.js";
+import { fetchRelatedQueries, sleep as defaultSleep, GoogleBlockedError } from "./googleTrends.service.js";
 import { MAX_CONSECUTIVE_FAILURES, randomDelay } from "./collectionPacing.js";
 import { logger } from "../utils/logger.js";
 
@@ -47,7 +47,7 @@ export function seedsForDay(date: Date): string[] {
 /**
  * Collects rising Google Shopping queries for today's hub seeds into
  * `discover_rising`. Runs at most once per UTC day, sequentially, replaces
- * each seed's rows atomically, and never throws.
+ * each seed's rows atomically, stops at the first Google block, and never throws.
  */
 export async function collectShoppingRising(
   overrides: Partial<ShoppingRisingDeps> = {}
@@ -94,7 +94,8 @@ export async function collectShoppingRising(
         logger.error(`Shopping rising failed for seed "${seed}"`, {
           error: err instanceof Error ? err.message : String(err),
         });
-        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) break;
+        // The block applies to the whole IP: retrying other seeds would only add requests.
+        if (err instanceof GoogleBlockedError || consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) break;
       }
       await deps.sleep(randomDelay());
     }

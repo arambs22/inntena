@@ -1,12 +1,13 @@
 import { db } from "../db/client.js";
 import { keywords, trendSnapshots, relatedQueries, keywordCollectionStatus, userRegions } from "../db/schema.js";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, isNull, gte, sql } from "drizzle-orm";
 import {
   fetchInterestOverTime,
   fetchRelatedQueries,
   sleep,
+  GoogleBlockedError,
 } from "./googleTrends.service.js";
-import { getTodayLocal } from "../utils/date.js";
+import { getStartOfTodayLocal } from "../utils/date.js";
 import { logger } from "../utils/logger.js";
 import { collectShoppingRising } from "./shoppingRising.service.js";
 import { MAX_CONSECUTIVE_FAILURES, randomDelay } from "./collectionPacing.js";
@@ -15,7 +16,19 @@ const SKIP_DELAY_MS = 700;
 
 export { MAX_CONSECUTIVE_FAILURES };
 
-type CollectionStatus = "skipped" | "success" | "failed";
+/** Stable code stored in `lastErrorMessage` when Google blocked the request, instead of the raw message. */
+export const GOOGLE_BLOCKED_CODE = "GOOGLE_BLOCKED";
+
+type CollectionStatus = "skipped" | "success" | "failed" | "blocked";
+
+/** Aggregate outcome of a full multi-region run. "aborted" is the generic consecutive-failure breaker. */
+export interface CollectionRunSummary {
+  outcome: "ok" | "blocked" | "aborted";
+  succeeded: number;
+  skipped: number;
+  failed: number;
+  regions: number;
+}
 
 export interface RegionCollectionResult {
   succeeded: number;
@@ -23,6 +36,8 @@ export interface RegionCollectionResult {
   failed: number;
   /** True when the region's loop bailed out early on repeated failures (likely rate-limited) rather than finishing its keyword list. */
   stoppedByCircuitBreaker: boolean;
+  /** True when Google answered with an HTML block page; the run stopped at once because the block is per IP. */
+  blockedByGoogle: boolean;
 }
 
 interface KeywordRow {
@@ -38,16 +53,21 @@ async function getEligibleKeywords(): Promise<KeywordRow[]> {
     .where(and(isNull(keywords.removedAt), eq(keywords.autoCollectPaused, false)));
 }
 
-/** True when this keyword+region already has a snapshot for today (local time). */
+/**
+ * True when this keyword+region was successfully collected during the current
+ * local day. Based on the collection status, not on a snapshot dated today:
+ * Google's series lags a day and drops the partial point, so no snapshot ever
+ * carries today's date.
+ */
 async function alreadyCollectedToday(keywordId: number, geo: string): Promise<boolean> {
   const existing = await db
-    .select({ id: trendSnapshots.id })
-    .from(trendSnapshots)
+    .select({ id: keywordCollectionStatus.id })
+    .from(keywordCollectionStatus)
     .where(
       and(
-        eq(trendSnapshots.keywordId, keywordId),
-        eq(trendSnapshots.geo, geo),
-        eq(trendSnapshots.date, getTodayLocal())
+        eq(keywordCollectionStatus.keywordId, keywordId),
+        eq(keywordCollectionStatus.geo, geo),
+        gte(keywordCollectionStatus.lastSuccessAt, getStartOfTodayLocal())
       )
     )
     .limit(1);
@@ -136,10 +156,11 @@ async function collectForKeyword(keywordId: number, term: string, geo: string): 
     );
     return "success";
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const blocked = err instanceof GoogleBlockedError;
+    const message = blocked ? GOOGLE_BLOCKED_CODE : err instanceof Error ? err.message : String(err);
     logger.error(`Failed to collect "${term}" for region "${geo || "worldwide"}"`, { error: message });
     await recordCollectionFailure(keywordId, geo, attemptedAt, message);
-    return "failed";
+    return blocked ? "blocked" : "failed";
   }
 }
 
@@ -158,6 +179,7 @@ export async function collectTrendsForAllUsers(geo: string = ""): Promise<Region
     skipped: 0,
     failed: 0,
     stoppedByCircuitBreaker: false,
+    blockedByGoogle: false,
   };
 
   for (const { id, term } of eligible) {
@@ -167,6 +189,13 @@ export async function collectTrendsForAllUsers(geo: string = ""): Promise<Region
       result.skipped++;
       await sleep(SKIP_DELAY_MS);
       continue;
+    }
+
+    if (status === "blocked") {
+      result.failed++;
+      result.blockedByGoogle = true;
+      logger.error("Google blocked the collection (HTML instead of JSON); stopping the run.");
+      break;
     }
 
     if (status === "success") {
@@ -198,21 +227,37 @@ export async function collectTrendsForAllUsers(geo: string = ""): Promise<Region
  * Worldwide, always implicit), one region at a time, sequentially. This
  * is the entry point for the scheduled collection endpoint.
  *
+ * Returns an aggregate summary across regions. A Google block (HTML instead
+ * of JSON) stops the whole run at the first occurrence, and the shopping step
+ * does not run after a block or an abort.
+ *
  * If a region's run trips the circuit breaker, the remaining regions are
  * abandoned too: the rate limit is upstream and per-IP, so starting the
  * next region with a fresh failure counter would just multiply the
  * requests hitting an endpoint that is already refusing us.
  */
-export async function collectTrendsForAllRegions(): Promise<void> {
+export async function collectTrendsForAllRegions(): Promise<CollectionRunSummary> {
   const regions = await getAllTrackedRegions();
+  const summary: CollectionRunSummary = { outcome: "ok", succeeded: 0, skipped: 0, failed: 0, regions: 0 };
+
   for (const geo of regions) {
     logger.info(`Starting collection for geo="${geo || "worldwide"}"...`);
     const result = await collectTrendsForAllUsers(geo);
+    summary.regions++;
+    summary.succeeded += result.succeeded;
+    summary.skipped += result.skipped;
+    summary.failed += result.failed;
+
+    if (result.blockedByGoogle) {
+      summary.outcome = "blocked";
+      return summary;
+    }
     if (result.stoppedByCircuitBreaker) {
       logger.error(
         `Aborting the rest of the run after region "${geo || "worldwide"}" tripped the circuit breaker (likely rate-limited).`
       );
-      return;
+      summary.outcome = "aborted";
+      return summary;
     }
   }
 
@@ -221,6 +266,7 @@ export async function collectTrendsForAllRegions(): Promise<void> {
   } catch (err) {
     logger.error("Shopping rising step failed", { error: err instanceof Error ? err.message : String(err) });
   }
+  return summary;
 }
 
 async function getAllTrackedRegions(): Promise<string[]> {

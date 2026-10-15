@@ -7,7 +7,7 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 import { MAX_ACTIVE_KEYWORDS_PER_USER } from "../config/limits.js";
 import { isEtsyCategoryId } from "../config/etsyCategories.js";
 import { sortByGrowthDesc } from "../utils/relatedGrowth.js";
-import { MAX_CONSECUTIVE_FAILURES } from "../services/trendCollector.service.js";
+import { MAX_CONSECUTIVE_FAILURES, GOOGLE_BLOCKED_CODE } from "../services/trendCollector.service.js";
 
 export const keywordsRouter = Router();
 
@@ -519,6 +519,10 @@ interface KeywordRegionStatus {
   lastAttemptAt: string;
   lastSuccessAt: string | null;
   consecutiveFailures: number;
+  /** When the most recent attempt failed (null if it succeeded). */
+  lastFailedAt: string | null;
+  /** Coarse failure category; the raw error message is never exposed. */
+  failureReason: "googleBlocked" | "other" | null;
 }
 
 /**
@@ -549,6 +553,13 @@ async function getCollectionStatusBatch(
           lastAttemptAt: row.lastAttemptAt.toISOString(),
           lastSuccessAt: row.lastSuccessAt ? row.lastSuccessAt.toISOString() : null,
           consecutiveFailures: row.consecutiveFailures,
+          lastFailedAt: row.consecutiveFailures > 0 ? row.lastAttemptAt.toISOString() : null,
+          failureReason:
+            row.consecutiveFailures === 0
+              ? null
+              : row.lastErrorMessage === GOOGLE_BLOCKED_CODE
+                ? "googleBlocked"
+                : "other",
         };
       }
     }

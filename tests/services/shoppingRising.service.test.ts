@@ -2,6 +2,7 @@ import { describe, expect, test, vi, beforeEach } from "vitest";
 import { eq } from "drizzle-orm";
 import { db } from "../../src/db/client.js";
 import { discoverRising } from "../../src/db/schema.js";
+import { GoogleBlockedError } from "../../src/services/googleTrends.service.js";
 import {
   HUB_SEEDS,
   seedsForDay,
@@ -69,5 +70,14 @@ describe("collectShoppingRising", () => {
   test("never throws when fetch rejects", async () => {
     const fetchFn = vi.fn().mockRejectedValue(new Error("boom"));
     await expect(collectShoppingRising(deps(fetchFn))).resolves.toBeDefined();
+  });
+
+  test("stops at the first Google block instead of trying the remaining seeds", async () => {
+    const fetchFn = vi.fn(async () => {
+      throw new GoogleBlockedError();
+    });
+    const res = await collectShoppingRising(deps(fetchFn));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(res.failedSeeds).toBe(1);
   });
 });

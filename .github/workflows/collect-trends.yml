@@ -8,13 +8,59 @@ on:
 jobs:
   collect:
     runs-on: ubuntu-latest
+    # A full run sleeps between every Google request, so it can take a long
+    # while; this is the overall ceiling for trigger + polling.
+    timeout-minutes: 60
+    env:
+      BASE_URL: ${{ secrets.NICHERADAR_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
-      # The endpoint acknowledges with 202 and runs the collection in the
-      # background, so this request returns immediately -- it does not wait
-      # for the run to finish. --fail accepts any 2xx and still fails the
-      # job on 401 (bad secret) or 409 (a run is already in flight).
+      # The endpoint acknowledges with 202 and a runId and runs the collection
+      # in the background. --fail accepts any 2xx and still fails the job on
+      # 401 (bad secret) or 409 (a run is already in flight).
       - name: Trigger scheduled collection
         run: |
-          curl --fail --max-time 60 -X POST \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.NICHERADAR_URL }}/api/internal/collect"
+          curl --fail --silent --show-error --max-time 60 -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$BASE_URL/api/internal/collect" | tee trigger.json
+          echo
+          echo "RUN_ID=$(jq -r '.runId' trigger.json)" >> "$GITHUB_ENV"
+
+      # Polls the status endpoint every 30 s until the run we started has
+      # finished, then fails the job unless it completed normally. A 404 or a
+      # different runId means the server restarted mid-run (e.g. a deploy), so
+      # the in-memory record of our run is gone.
+      - name: Wait for the collection to finish
+        run: |
+          while true; do
+            sleep 30
+            HTTP_CODE=$(curl --silent --show-error --max-time 60 -o status.json -w '%{http_code}' \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              "$BASE_URL/api/internal/collect/status") || { echo "Status request failed; retrying"; continue; }
+
+            if [ "$HTTP_CODE" = "404" ]; then
+              echo "::error::No run recorded on the server; it probably restarted mid-run (deploy?)."
+              exit 1
+            fi
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "Status endpoint answered HTTP $HTTP_CODE; retrying"
+              continue
+            fi
+
+            if [ "$(jq -r '.runId' status.json)" != "$RUN_ID" ]; then
+              echo "::error::Run id mismatch; the server restarted mid-run (deploy?)."
+              exit 1
+            fi
+
+            FINISHED=$(jq -r '.finishedAt // empty' status.json)
+            [ -z "$FINISHED" ] && { echo "Still running..."; continue; }
+
+            STATUS=$(jq -r '.status' status.json)
+            jq -c '.summary' status.json
+            case "$STATUS" in
+              ok) echo "Collection finished successfully."; exit 0 ;;
+              blocked) echo "::error::Google blocked Render's IP; data will be retried on the next run."; exit 1 ;;
+              aborted) echo "::error::Collection aborted after repeated failures (likely rate-limited)."; exit 1 ;;
+              *) echo "::error::Collection run ended with status '$STATUS'."; exit 1 ;;
+            esac
+          done
